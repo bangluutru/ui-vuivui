@@ -8,7 +8,7 @@ Thư viện **Web Component vui vẻ** cho các thao tác thường gặp — up
 |---|---|
 | `<vv-basket-upload>` — ném file vào rổ để upload | ✅ v0.1 |
 | `<vv-slingshot-otp>` — bắn từng số OTP vào ô bằng ná cao su | ✅ v0.1 |
-| Đăng nhập Halloween với đèn pin soi mật khẩu | dự kiến |
+| `<vv-halloween-login>` — đăng nhập ngày ↔ đêm Halloween, đèn pin soi mật khẩu | ✅ v0.1 |
 | Ném đề vào máy in (`<vv-print>`) | dự kiến |
 | Captcha vui (vỏ trò chơi bọc captcha thật: Cap / ALTCHA / Turnstile) | dự kiến |
 
@@ -151,6 +151,50 @@ Gõ phím, dán mã, Backspace và tự điền mã từ SMS (`autocomplete="one
 | `vv-continue` | `{ code }` — bấm nút trên màn hình thành công |
 
 `jsonVerifier(url, { field = 'code', headers, extra, credentials })`: POST JSON; 2xx → `{ ok, message }`; 400/401/422 kèm `{ ok:false }` → mã sai; mã lỗi khác → ném `VerifyHttpError`.
+
+## `<vv-halloween-login>`
+
+![Đăng nhập Halloween](docs/demo-halloween-login.png)
+
+Công tắc ☀/🌙 chuyển từ màn đăng nhập ban ngày sang **đêm Halloween**: khung bí ngô, đèn lồng, phù thủy bay, dơi, sói hú, nhện treo tơ.
+Ban đêm, nút con mắt thành **đèn pin**: luồng sáng xoay theo con trỏ (cảm ứng: chạm để nhắm) và mật khẩu **chỉ đọc được ở chỗ đèn chiếu tới**. Bí ngô bị chiếu thì sáng mặt; nhện sợ sáng nên leo lên.
+
+```html
+<script type="module">
+  import { jsonAuthenticator } from 'ui-vuivui';
+  const login = document.querySelector('vv-halloween-login');
+  login.authenticator = jsonAuthenticator('/api/login'); // { email, password } → { ok, message? }
+  login.addEventListener('vv-login', () => (location.href = '/app'));
+</script>
+
+<vv-halloween-login theme="auto" forgot-href="/quen-mat-khau" signup-href="/dang-ky" sound></vv-halloween-login>
+```
+
+- **Không dùng shadow DOM**: `<form>` thật với `autocomplete="username"` / `"current-password"` để trình quản lý mật khẩu tự điền / lưu được. CSS chèn vào `<head>` một lần, mọi lớp có tiền tố `vvhl-`.
+- Đèn pin = hiện mật khẩu (người dùng tự bật, như nút con mắt): khi bật, ô chuyển sang `type="text"` nhưng chữ bị che bằng mặt nạ hình nón, chỉ lộ trong luồng sáng. Tự tắt khi gửi form (trước khi gọi máy chủ), khi đổi ngày/đêm, khi chuyển tab hoặc chuyển focus ra ngoài.
+- **Không sự kiện nào chứa mật khẩu.**
+
+| Thuộc tính HTML | |
+|---|---|
+| `theme` | `day` (mặc định) · `night` · `auto` (18h–6h là đêm) |
+| `identifier` | `email` (mặc định) hoặc `username` |
+| `forgot-href` · `signup-href` | link; bỏ trống → phát sự kiện `vv-forgot` / `vv-signup` |
+| `sound` · `lang` · `disabled` | như các thẻ khác |
+
+| JS | |
+|---|---|
+| `authenticator` | **Bắt buộc.** `({ identifier, password }) => Promise<boolean \| {ok, message?}>`. `ok:false` = sai thông tin (giữ email, xóa mật khẩu, rung). **Ném lỗi** = lỗi mạng (giữ nguyên, cho thử lại). Thiếu → báo lỗi, không bao giờ "thành công". |
+| `theme` · `reset()` · `focus()` · `labels` | |
+
+| Sự kiện | `detail` |
+|---|---|
+| `vv-login` | `{ identifier, verdict }` |
+| `vv-login-failed` | `{ identifier, message }` |
+| `vv-error` | `{ identifier, error }` |
+| `vv-theme` | `{ theme }` |
+| `vv-forgot` · `vv-signup` | `{ identifier }` · `{}` |
+
+`jsonAuthenticator(url, { identifierField = 'email', passwordField = 'password', headers, extra, credentials = 'same-origin' })`: 2xx → `{ ok, message }`; 400/401/403/422 kèm `{ ok:false }` → sai thông tin; lỗi khác → ném `AuthHttpError`.
 
 ## Nguyên tắc chung của thư viện
 

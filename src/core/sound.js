@@ -80,6 +80,33 @@ const SOUNDS = {
     tone(ac, { freq: 300, to: 120, type: 'sine', peak: 0.3, decay: 0.12 });
     noise(ac, { dur: 0.06, peak: 0.12, filter: 'lowpass', freq: 1200 });
   },
+  /** hú — sói tru lúc chuyển sang đêm */
+  howl: (ac) => {
+    const t0 = ac.currentTime;
+    const osc = ac.createOscillator();
+    const vib = ac.createOscillator();
+    const vibGain = ac.createGain();
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(330, t0);
+    osc.frequency.linearRampToValueAtTime(620, t0 + 0.5);
+    osc.frequency.linearRampToValueAtTime(560, t0 + 1.2);
+    osc.frequency.linearRampToValueAtTime(380, t0 + 1.7);
+    vib.frequency.value = 6;
+    vibGain.gain.value = 9;
+    vib.connect(vibGain);
+    vibGain.connect(osc.frequency);
+    const g = envGain(ac, t0, 0.12, 0.25, 1.5);
+    osc.connect(g);
+    osc.start(t0);
+    vib.start(t0);
+    osc.stop(t0 + 1.9);
+    vib.stop(t0 + 1.9);
+  },
+  /** tách — bật/tắt đèn pin */
+  click: (ac) => {
+    tone(ac, { freq: 2200, to: 1400, type: 'square', peak: 0.04, decay: 0.03 });
+    noise(ac, { dur: 0.03, peak: 0.08, filter: 'highpass', freq: 3000 });
+  },
   /** bíp — lỗi / bị loại */
   buzz: (ac) => tone(ac, { freq: 180, type: 'sawtooth', peak: 0.08, decay: 0.3 }),
 };

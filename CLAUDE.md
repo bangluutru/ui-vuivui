@@ -3,7 +3,7 @@
 Thư viện Web Component "vui vẻ" cho thao tác thường gặp (upload, in, đăng nhập, OTP, captcha). Chủ dự án giao tiếp bằng **tiếng Việt**, không giả định người đọc biết code.
 
 ## Cấu trúc
-- `src/core/` — lõi dùng chung, **không đụng DOM** để test được trong Node: `upload-queue.js`, `xhr-uploader.js`, `verifier.js`, `ballistics.js` (ném xiên, trúng ô nào), `motion.js` (cung ném, tween), `sound.js` (Web Audio), `i18n.js`.
+- `src/core/` — lõi dùng chung, **không đụng DOM** để test được trong Node: `upload-queue.js`, `xhr-uploader.js`, `verifier.js`, `auth.js`, `ballistics.js` (ném xiên, trúng ô nào), `beam.js` (hình nón đèn pin, góc ±180°), `motion.js` (cung ném, tween), `sound.js` (Web Audio), `i18n.js`.
 - `src/<ten-thanh-phan>/` — mỗi "bộ da" một thư mục: element + `styles.js` + `art.js` (SVG tự vẽ) + `labels.js` (vi/en).
 - `src/index.js` — điểm vào, đăng ký mọi element.
 - `index.html` + `demo/` — trang demo (mỗi thẻ một `<section>`). Uploader/verifier giả **chỉ** nằm trong `demo/`.
@@ -12,6 +12,8 @@ Thư viện Web Component "vui vẻ" cho thao tác thường gặp (upload, in, 
 
 ## Quy ước
 - Thẻ mới: đặt file element ở `src/<thu-muc>/<ten>.js` (khớp `sideEffects: ./src/*/*.js`) và xuất trong `src/index.js` — `tests/package.test.js` kiểm tra, thiếu là bản build mất lệnh đăng ký thẻ.
+- Thẻ có form đăng nhập (`vv-halloween-login`) KHÔNG dùng shadow DOM để trình quản lý mật khẩu nhận ra; CSS chèn vào <head> một lần, mọi selector nằm dưới tên thẻ, lớp tiền tố `vvhl-`. Không đưa mật khẩu vào `detail` của sự kiện.
+- Hiệu ứng soi chữ: dùng `mask-image` trên chính ô nhập, KHÔNG dùng `backdrop-filter` + `clip-path` (Chrome áp bộ lọc lên cả khung chữ nhật bao quanh).
 - Tên thẻ `vv-<việc>` hoặc `vv-<chủ-đề>-<việc>`; sự kiện `vv-*` có `bubbles + composed`.
 - Không thêm thư viện runtime nếu không thật cần (hiện 0 phụ thuộc). Mượn mã: chỉ MIT/ISC/Apache, ghi nguồn. Không dùng Aceternity, hover.dev, hàng Framer, mã GPL.
 - Element không bao giờ giả lập thành công: thiếu `uploader`/backend → báo lỗi rõ ràng.

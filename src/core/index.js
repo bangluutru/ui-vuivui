@@ -4,3 +4,6 @@ export { playSound } from './sound.js';
 export { tween, ease, wait, quadPoint, arcControl, arcPath, prefersReducedMotion } from './motion.js';
 export { clampPull, launchVelocity, positionAt, timeToReachY, resolveShot, samplePath } from './ballistics.js';
 export { jsonVerifier, normalizeVerdict, VerifyHttpError } from './verifier.js';
+export { angleTo, normalizeAngle, angleDiff, inBeam, beamPolygon, beamClipPath } from './beam.js';
+export { jsonAuthenticator, AuthHttpError } from './auth.js';
+export { fmt, pickLabels } from './i18n.js';

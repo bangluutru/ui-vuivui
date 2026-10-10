@@ -49,6 +49,7 @@
     pre.code { margin: 0; padding: 12px; overflow: auto; border-radius: 10px; background: #1f130c; color: #ffd9bd; font: .8rem/1.5 ui-monospace, Menlo, monospace; }
     .note { font-size: .82rem; color: var(--muted); }
     button.small { font: inherit; font-size: .85rem; padding: 6px 12px; border-radius: 8px; border: 1px solid var(--line); background: var(--panel); color: var(--ink); cursor: pointer; }
+    .wide { max-width: 1040px; }
     .secret { display: inline-block; padding: 4px 12px; border-radius: 8px; background: #1f130c; color: #ffd36b; font: 700 1.3rem ui-monospace, Menlo, monospace; letter-spacing: .18em; }
   </style>
 </head>
@@ -60,6 +61,7 @@
       <nav>
         <a href="#upload">🏀 Ném file vào rổ</a>
         <a href="#otp">🎯 Bắn OTP bằng ná</a>
+        <a href="#login">🎃 Đăng nhập Halloween</a>
         <a href="https://github.com/bangluutru/ui-vuivui">GitHub</a>
       </nav>
     </header>
@@ -155,12 +157,57 @@ otp.addEventListener('vv-continue', () =&gt; location.href = '/app');
         </div>
       </div>
     </section>
+    <!-- ================= Đăng nhập Halloween ================= -->
+    <section class="demo" id="login">
+      <h2>Đăng nhập Halloween · <b>&lt;vv-halloween-login&gt;</b></h2>
+      <p class="lead">Bấm công tắc ☀/🌙 để sang đêm Halloween. Ban đêm, nút con mắt thành đèn pin: bật lên rồi rê chuột (hoặc chạm) — mật khẩu chỉ đọc được ở chỗ đèn chiếu. Thử chiếu vào bí ngô và con nhện.</p>
+      <vv-halloween-login id="login-el" theme="night" sound></vv-halloween-login>
+      <div class="grid" style="margin-top:20px">
+        <div class="panel">
+          <h3>Thử nghiệm</h3>
+          <p>Tài khoản demo: <span class="secret" style="font-size:.95rem;letter-spacing:.04em" id="demoAcc"></span></p>
+          <label><span>Máy chủ</span>
+            <select id="loginMode">
+              <option value="ok">Kiểm tra bình thường</option>
+              <option value="network">Lỗi mạng (giữ thông tin, cho thử lại)</option>
+              <option value="none">Không có authenticator</option>
+            </select>
+          </label>
+          <label><span>Đăng nhập bằng</span>
+            <select id="loginId"><option value="email">Email</option><option value="username">Tên đăng nhập</option></select>
+          </label>
+          <label><span>Ngôn ngữ</span>
+            <select id="loginLang"><option value="vi">Tiếng Việt</option><option value="en">English</option></select>
+          </label>
+          <p><button class="small" id="loginReset" type="button">Hiện lại form</button></p>
+          <p class="note">Sự kiện không bao giờ chứa mật khẩu. Form nằm ngoài shadow DOM để trình quản lý mật khẩu nhận ra.</p>
+        </div>
+        <div>
+          <div class="panel">
+            <h3>Sự kiện</h3>
+            <pre class="log" id="logLogin"></pre>
+          </div>
+          <div class="panel">
+            <h3>Cách dùng</h3>
+<pre class="code">import { jsonAuthenticator } from 'ui-vuivui';
+const login = document.querySelector('vv-halloween-login');
+// Máy chủ nhận { email, password } → trả { ok, message? }
+login.authenticator = jsonAuthenticator('/api/login');
+login.addEventListener('vv-login', () =&gt; location.href = '/app');
+
+&lt;vv-halloween-login theme="auto" forgot-href="/quen-mat-khau"
+  signup-href="/dang-ky" sound&gt;&lt;/vv-halloween-login&gt;</pre>
+          </div>
+        </div>
+      </div>
+    </section>
   </main>
 
   <script type="module">
     import './src/index.js';
     import { fakeUploader } from './demo/fake-uploader.js';
     import { fakeVerifier, randomCode } from './demo/fake-verifier.js';
+    import { fakeAuthenticator, DEMO_ACCOUNT } from './demo/fake-authenticator.js';
 
     const $ = (id) => document.getElementById(id);
     const logger = (el) => (line) => {
@@ -215,6 +262,24 @@ otp.addEventListener('vv-continue', () =&gt; location.href = '/app');
     otp.addEventListener('vv-rejected', (e) => wo(`vv-rejected ${e.detail.code}: ${e.detail.message}`));
     otp.addEventListener('vv-error', (e) => wo(`vv-error    ${e.detail.code}: ${e.detail.error.message}`));
     otp.addEventListener('vv-continue', () => { wo('vv-continue → app sẽ chuyển trang ở đây'); });
+
+    // ----- Đăng nhập Halloween -----
+    const login = $('login-el');
+    function applyLogin() {
+      const mode = $('loginMode').value;
+      login.authenticator = mode === 'none' ? null : fakeAuthenticator({ mode });
+      login.setAttribute('identifier', $('loginId').value);
+      login.setAttribute('lang', $('loginLang').value);
+      const id = $('loginId').value === 'username' ? DEMO_ACCOUNT.username : DEMO_ACCOUNT.identifier;
+      $('demoAcc').textContent = `${id} / ${DEMO_ACCOUNT.password}`;
+    }
+    ['loginMode', 'loginId', 'loginLang'].forEach((id) => $(id).addEventListener('input', applyLogin));
+    $('loginReset').addEventListener('click', () => login.reset());
+    applyLogin();
+    const wl = logger($('logLogin'));
+    const show = (d) => JSON.stringify(d, (k, v) => (v instanceof Error ? v.message : v));
+    ['vv-theme', 'vv-login', 'vv-login-failed', 'vv-error', 'vv-forgot', 'vv-signup'].forEach((t) =>
+      login.addEventListener(t, (e) => wl(`${t.padEnd(15)} ${show(e.detail)}`)));
   </script>
 </body>
 </html>

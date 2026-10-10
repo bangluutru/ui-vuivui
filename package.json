@@ -11,7 +11,8 @@
     "./basket-upload": "./src/basket-upload/basket-upload.js",
     "./core": "./src/core/index.js",
     "./dist/*": "./dist/*",
-    "./slingshot-otp": "./src/slingshot-otp/slingshot-otp.js"
+    "./slingshot-otp": "./src/slingshot-otp/slingshot-otp.js",
+    "./halloween-login": "./src/halloween-login/halloween-login.js"
   },
   "files": [
     "dist",
