@@ -1,0 +1,11 @@
+{
+  // ui-vuivui — trang demo tĩnh (Workers static assets). Build: npm run build:demo → demo-dist/
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "ui-vuivui",
+  "compatibility_date": "2026-09-20",
+  "assets": {
+    "directory": "./demo-dist"
+  },
+  "workers_dev": true,
+  "preview_urls": true
+}

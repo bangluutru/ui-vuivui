@@ -12,6 +12,8 @@ Thư viện **Web Component vui vẻ** cho các thao tác thường gặp — up
 | Ném đề vào máy in (`<vv-print>`) | dự kiến |
 | Captcha vui (vỏ trò chơi bọc captcha thật: Cap / ALTCHA / Turnstile) | dự kiến |
 
+**Demo trực tuyến:** https://ui-vuivui.bangluutru.workers.dev
+
 ## Chạy thử
 
 ```bash
@@ -19,6 +21,7 @@ npm install
 npm run dev      # trang demo: http://localhost:5180
 npm test         # test phần lõi
 npm run build    # thư viện → dist/
+npm run deploy   # build trang demo + đưa lên Cloudflare Workers (cần `wrangler login`)
 ```
 
 ## Dùng trong app khác
