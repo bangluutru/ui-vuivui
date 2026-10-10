@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ui-vuivui — demo</title>
+  <style>
+    :root {
+      --bg: #fde3cc;
+      --panel: #fffaf5;
+      --ink: #2b1a10;
+      --muted: #7d604c;
+      --line: #f0cfb4;
+      --accent: #f26a1b;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root:not([data-theme="light"]) {
+        --bg: #1b120d; --panel: #261a13; --ink: #f6e8dc; --muted: #c2a38e; --line: #4a3324;
+      }
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; min-height: 100vh; color: var(--ink);
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+      background: radial-gradient(90% 60% at 50% 0%, rgba(255,255,255,.5), transparent 70%), var(--bg);
+    }
+    main { max-width: 1040px; margin: 0 auto; padding: 32px 16px 64px; }
+    h1 { margin: 0 0 4px; font-size: 1.7rem; letter-spacing: -.02em; }
+    h1 b { color: var(--accent); }
+    .lead { margin: 0 0 28px; color: var(--muted); }
+    .grid { display: grid; grid-template-columns: minmax(0, 440px) minmax(0, 1fr); gap: 28px; align-items: start; }
+    .grid > * { min-width: 0; }
+    @media (max-width: 820px) { .grid { grid-template-columns: 1fr; } }
+    label { flex-wrap: wrap; }
+    select { max-width: 100%; }
+    .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 16px; padding: 18px; }
+    .panel h2 { margin: 0 0 12px; font-size: 1rem; }
+    .panel + .panel { margin-top: 16px; }
+    label { display: flex; align-items: center; gap: 10px; margin: 8px 0; font-size: .9rem; }
+    label span { min-width: 140px; color: var(--muted); }
+    input[type="range"] { flex: 1; accent-color: var(--accent); }
+    select { font: inherit; padding: 4px 8px; border-radius: 8px; border: 1px solid var(--line); background: var(--panel); color: var(--ink); }
+    output { min-width: 44px; text-align: right; font-variant-numeric: tabular-nums; }
+    #log { margin: 0; padding: 10px; height: 180px; overflow: auto; border-radius: 10px; background: rgba(0,0,0,.05); font: .78rem/1.5 ui-monospace, Menlo, monospace; white-space: pre-wrap; }
+    pre.code { margin: 0; padding: 12px; overflow: auto; border-radius: 10px; background: #1f130c; color: #ffd9bd; font: .8rem/1.5 ui-monospace, Menlo, monospace; }
+    .note { font-size: .82rem; color: var(--muted); }
+    button.small { font: inherit; font-size: .85rem; padding: 6px 12px; border-radius: 8px; border: 1px solid var(--line); background: var(--panel); color: var(--ink); cursor: pointer; }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>ui-vuivui · <b>&lt;vv-basket-upload&gt;</b></h1>
+    <p class="lead">Kéo file từ máy vào thẻ bên dưới (hoặc bấm nút) — file thành quả bóng và bay vào rổ.</p>
+
+    <div class="grid">
+      <vv-basket-upload id="up" multiple sound max-size="20MB"></vv-basket-upload>
+
+      <div>
+        <section class="panel">
+          <h2>Thử nghiệm</h2>
+          <label><span>Ngôn ngữ</span>
+            <select id="lang"><option value="vi">Tiếng Việt</option><option value="en">English</option></select>
+          </label>
+          <label><span>Uploader</span>
+            <select id="mode">
+              <option value="fake">Giả lập (demo, không gửi file)</option>
+              <option value="none">Không có (xem khi app quên nối máy chủ)</option>
+            </select>
+          </label>
+          <label><span>Thời gian tải / file</span><input id="secs" type="range" min="0.4" max="6" step="0.2" value="1.8"><output id="secsOut"></output></label>
+          <label><span>Tỉ lệ trượt rổ (lỗi)</span><input id="miss" type="range" min="0" max="1" step="0.05" value="0.2"><output id="missOut"></output></label>
+          <label><span>Chỉ nhận</span>
+            <select id="accept">
+              <option value="">Mọi loại file</option>
+              <option value="image/*">Ảnh (image/*)</option>
+              <option value=".pdf,application/pdf">PDF</option>
+            </select>
+          </label>
+          <p><button class="small" id="clear" type="button">Xóa hết danh sách</button></p>
+          <p class="note">Âm thanh bật/tắt bằng nút loa trên thẻ. Bật “Giảm chuyển động” trong cài đặt máy để xem chế độ không hoạt hình.</p>
+        </section>
+
+        <section class="panel">
+          <h2>Sự kiện</h2>
+          <pre id="log"></pre>
+        </section>
+
+        <section class="panel">
+          <h2>Cách dùng</h2>
+<pre class="code">&lt;script type="module"&gt;
+  import { xhrUploader } from 'ui-vuivui';
+  const up = document.querySelector('vv-basket-upload');
+  up.uploader = xhrUploader('/api/upload', { fieldName: 'file' });
+  up.addEventListener('vv-uploaded', (e) =&gt; console.log(e.detail.result));
+&lt;/script&gt;
+
+&lt;vv-basket-upload multiple sound accept="image/*" max-size="10MB"&gt;
+&lt;/vv-basket-upload&gt;</pre>
+        </section>
+      </div>
+    </div>
+  </main>
+
+  <script type="module">
+    import './src/index.js';
+    import { fakeUploader } from './demo/fake-uploader.js';
+
+    const up = document.getElementById('up');
+    const $ = (id) => document.getElementById(id);
+    const log = $('log');
+
+    function apply() {
+      $('secsOut').textContent = `${$('secs').value}s`;
+      $('missOut').textContent = `${Math.round($('miss').value * 100)}%`;
+      up.uploader = $('mode').value === 'fake'
+        ? fakeUploader({ seconds: +$('secs').value, missRate: +$('miss').value })
+        : null;
+      up.setAttribute('lang', $('lang').value);
+      $('accept').value ? up.setAttribute('accept', $('accept').value) : up.removeAttribute('accept');
+    }
+    ['secs', 'miss', 'mode', 'lang', 'accept'].forEach((id) => $(id).addEventListener('input', apply));
+    $('clear').addEventListener('click', () => up.clear());
+    apply();
+
+    const write = (line) => {
+      const t = new Date().toLocaleTimeString();
+      log.textContent = `${t}  ${line}\n${log.textContent}`.slice(0, 6000);
+    };
+    up.addEventListener('vv-select', (e) => write(`vv-select   ${e.detail.items.map((i) => i.name).join(', ')}`));
+    up.addEventListener('vv-uploaded', (e) => write(`vv-uploaded ${e.detail.item.name}`));
+    up.addEventListener('vv-error', (e) => write(`vv-error    ${e.detail.item.name}: ${e.detail.error.message}`));
+    up.addEventListener('vv-reject', (e) => write(`vv-reject   ${e.detail.file.name} (${e.detail.reason})`));
+    up.addEventListener('vv-remove', (e) => write(`vv-remove   ${e.detail.item.name}`));
+    up.addEventListener('vv-drain', () => write('vv-drain    hàng chờ trống'));
+  </script>
+</body>
+</html>
