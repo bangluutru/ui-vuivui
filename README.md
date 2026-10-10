@@ -302,7 +302,7 @@ Chỉ nghe ở `127.0.0.1`; mã bí mật mới mỗi lần chạy (gửi trong 
 
 ## `<vv-basket-shot>`
 
-Ném **một** quả bóng vào rổ để xác nhận một việc — ví dụ trước khi mở hộp thoại in. Kéo bóng về phía rổ để ngắm (đường chấm **xanh** = sẽ vào), thả tay để ném; bóng phải rơi xuống qua vành mới tính — có thể **chạm vành** hoặc **trượt**. Chạm nhẹ quả bóng / nhấn Enter → ném chuẩn, luôn vào.
+Ném **một** quả bóng vào rổ để xác nhận một việc — ví dụ trước khi mở hộp thoại in. Giữ bóng và kéo: bóng đi theo tay (trong nửa dưới sân), đường chấm vẽ từ chỗ bóng đang đứng (**xanh** = sẽ vào); hướng và độ dài kéo là hướng và lực ném; thả tay để ném; bóng phải rơi xuống qua vành mới tính — có thể **chạm vành** hoặc **trượt**. Chạm nhẹ quả bóng / nhấn Enter → ném chuẩn, luôn vào.
 
 ```html
 <vv-basket-shot lang="ja" sound></vv-basket-shot>

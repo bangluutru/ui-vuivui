@@ -3,7 +3,7 @@
 export const LABELS = {
   vi: {
     title: 'Ném bóng vào rổ',
-    hint: 'Kéo bóng về phía rổ để ngắm, thả tay để ném — hoặc chạm nhẹ quả bóng',
+    hint: 'Giữ bóng, kéo về phía rổ để ngắm, thả tay để ném — hoặc chạm nhẹ quả bóng',
     aimGood: 'Ngắm chuẩn rồi, thả tay!',
     aim: 'Đường chấm xanh là sẽ vào rổ',
     swish: 'Vào rồi! 🎉',
@@ -16,7 +16,7 @@ export const LABELS = {
   },
   ja: {
     title: 'ゴールにシュート！',
-    hint: 'ボールをゴールの方へドラッグして狙い、指を離して投げよう（タップでもOK）',
+    hint: 'ボールを持ってゴールの方へ動かして狙い、指を離して投げよう（タップでもOK）',
     aimGood: 'ナイス！指を離して投げよう',
     aim: '点線が緑ならゴール',
     swish: 'ナイスシュート！🎉',
@@ -29,7 +29,7 @@ export const LABELS = {
   },
   en: {
     title: 'Shoot the hoop',
-    hint: 'Drag the ball toward the hoop to aim, let go to shoot — or just tap the ball',
+    hint: 'Hold the ball, move it toward the hoop to aim, let go to shoot — or just tap it',
     aimGood: 'Perfect aim, let go!',
     aim: 'A green dotted line means it goes in',
     swish: 'Swish! 🎉',

@@ -1,6 +1,8 @@
 // <vv-basket-shot> — ném một quả bóng vào rổ để "xác nhận" một việc (vd. trước khi in).
 //
-//   Kéo bóng về phía rổ để ngắm (đường chấm xanh = sẽ vào), thả tay để ném.
+//   Giữ bóng và kéo: bóng đi theo tay (trong nửa dưới sân); hướng + độ dài từ chỗ cầm bóng
+//   tới chỗ bóng đang đứng là hướng + lực ném. Đường chấm vẽ từ vị trí hiện tại (xanh = sẽ vào).
+//   Thả tay → bóng bay từ đúng chỗ đó.
 //   Bóng phải RƠI XUỐNG qua vành: lọt lưới → sự kiện `vv-score`; chạm vành / trượt → ném lại.
 //   Chạm nhẹ quả bóng hoặc nhấn Enter/Space → ném chuẩn, luôn vào (ai cũng dùng được).
 //
@@ -17,7 +19,7 @@ import { LABELS } from './labels.js';
 const BALL = 34;
 const R = BALL / 2;
 const GRAVITY = 1300;    // px/s²
-const MAX_DRAG = 130;    // px kéo tối đa
+const MAX_DRAG = 150;    // px kéo tối đa (độ dài ứng với lực mạnh nhất)
 const SLOWMO = 0.75;
 const RIM_HALF = 34 / 160; // nửa độ rộng lòng vành / bề ngang hình rổ
 
@@ -120,7 +122,8 @@ export class VvBasketShot extends HTMLElement {
 
   connectedCallback() {
     this._render();
-    requestAnimationFrame(() => this._placeHome(true));
+    this._placeHome(true); // đặt ngay nếu sân đã có kích thước (tab nền: khung hình kế tiếp có thể rất lâu mới tới)
+    requestAnimationFrame(() => { if (!this._pos) this._placeHome(true); });
     if (!this._ro && typeof ResizeObserver === 'function') {
       this._ro = new ResizeObserver(() => { if (!this._busy && !this._gesture) this._placeHome(false); });
       this._ro.observe(this._el.court);
@@ -242,15 +245,24 @@ export class VvBasketShot extends HTMLElement {
     ev.preventDefault();
     if (this._gesture) this._cancelGesture();
     try { this._el.ball.setPointerCapture(ev.pointerId); } catch { /* sự kiện giả lập */ }
-    const g = { id: ev.pointerId, start: this._toCourt(ev.clientX, ev.clientY), dx: 0, dy: 0, moved: false, ended: false };
+    const home = this._homePoint();
+    this._place(home); // chắc chắn bóng đang ở đúng chỗ trước khi kéo
+    const p0 = this._toCourt(ev.clientX, ev.clientY);
+    // grab: chỗ ngón tay so với tâm bóng → bóng không "nhảy" về dưới ngón tay
+    const g = { id: ev.pointerId, start: p0, grab: { x: p0.x - home.x, y: p0.y - home.y }, origin: home, cur: home, dx: 0, dy: 0, moved: false, ended: false };
     this._gesture = g;
     g.onMove = (e2) => {
       if (e2.pointerId !== g.id) return;
       if (e2.pointerType === 'mouse' && e2.buttons === 0) { this._cancelGesture(); return; }
       const p = this._toCourt(e2.clientX, e2.clientY);
-      g.dx = p.x - g.start.x;
-      g.dy = p.y - g.start.y;
-      if (Math.hypot(g.dx, g.dy) > 8) g.moved = true;
+      if (Math.hypot(p.x - g.start.x, p.y - g.start.y) > 8) g.moved = true;
+      if (!g.moved) return;
+      const want = { x: p.x - g.grab.x, y: p.y - g.grab.y };
+      g.cur = this._clampBall(want);
+      // Lực + hướng theo chỗ NGÓN TAY (kéo quá mép giới hạn vẫn mạnh thêm); bóng dừng ở mép.
+      g.dx = want.x - g.origin.x;
+      g.dy = want.y - g.origin.y;
+      this._place(g.cur, g.dx / 3);
       this._drawAim(g);
     };
     g.onUp = (e2) => { if (e2.pointerId === g.id) this._release(g); };
@@ -276,10 +288,29 @@ export class VvBasketShot extends HTMLElement {
     const g = this._gesture;
     if (!g || g.ended) return;
     this._endGesture(g);
+    this._returnHome(g.cur);
+  }
+
+  /** Bóng chỉ được kéo trong sân, và không lên cao quá gần vành (không "đặt" bóng vào rổ được). */
+  _clampBall(p) {
+    const c = this._el.court;
+    const rim = this._rim();
+    const W = c.clientWidth;
+    const H = c.clientHeight;
+    return {
+      x: Math.max(R + 2, Math.min(W - R - 2, p.x)),
+      y: Math.max(Math.min(rim.y + 90, H - R - 2), Math.min(H - R - 2, p.y)),
+    };
+  }
+
+  _returnHome(from) {
+    const to = this._homePoint();
+    if (!from || (from.x === to.x && from.y === to.y)) { this._place(to); return; }
+    tween({ duration: 220, easing: ease.outQuad, onUpdate: (k) => this._place({ x: from.x + (to.x - from.x) * k, y: from.y + (to.y - from.y) * k }) });
   }
 
   _drawAim(g) {
-    const start = this._homePoint();
+    const start = g.cur;
     const rim = this._rim();
     const v = this._velocityFromDrag(g.dx, g.dy, start, rim);
     const aim = this._el.aim;
@@ -294,22 +325,21 @@ export class VvBasketShot extends HTMLElement {
   _release(g) {
     if (g.ended) return;
     this._endGesture(g);
-    const start = this._homePoint();
     const rim = this._rim();
-    // Không kéo = chạm nhẹ → ném chuẩn.
-    if (!g.moved) { this._shoot(this._perfectVelocity(start, rim), 'tap'); return; }
-    const v = this._velocityFromDrag(g.dx, g.dy, start, rim);
-    if (v.power < 0.08) { this._setState('idle', ''); return; }
-    this._shoot(v, 'throw');
+    // Không kéo = chạm nhẹ → ném chuẩn từ chỗ bóng đang nằm.
+    if (!g.moved) { this._shoot(this._perfectVelocity(g.origin, rim), 'tap'); return; }
+    const v = this._velocityFromDrag(g.dx, g.dy, g.cur, rim);
+    if (v.power < 0.08) { this._setState('idle', ''); this._returnHome(g.cur); return; }
+    this._shoot(v, 'throw', g.cur);
   }
 
   // ---------- Bay ----------
 
-  async _shoot(vel, method) {
+  async _shoot(vel, method, from) {
     if (this._busy || this._scored || this.disabled) return;
     this._busy = true;
     this._shots++;
-    const start = this._homePoint();
+    const start = from || this._homePoint();
     const rim = this._rim();
     const res = resolveHoopShot(start, vel, GRAVITY, rim, R);
     this._sfx('whoosh');
