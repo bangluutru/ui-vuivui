@@ -24,92 +24,153 @@
       font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
       background: radial-gradient(90% 60% at 50% 0%, rgba(255,255,255,.5), transparent 70%), var(--bg);
     }
-    main { max-width: 1040px; margin: 0 auto; padding: 32px 16px 64px; }
-    h1 { margin: 0 0 4px; font-size: 1.7rem; letter-spacing: -.02em; }
-    h1 b { color: var(--accent); }
-    .lead { margin: 0 0 28px; color: var(--muted); }
+    main { max-width: 1040px; margin: 0 auto; padding: 28px 16px 64px; }
+    header h1 { margin: 0 0 4px; font-size: 1.7rem; letter-spacing: -.02em; }
+    header p { margin: 0 0 14px; color: var(--muted); }
+    nav { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 28px; }
+    nav a { padding: 7px 14px; border-radius: 999px; border: 1px solid var(--line); background: var(--panel); color: var(--ink); text-decoration: none; font-size: .9rem; }
+    nav a:hover { border-color: var(--accent); }
+    section.demo { scroll-margin-top: 16px; margin-bottom: 56px; }
+    section.demo > h2 { margin: 0 0 4px; font-size: 1.3rem; }
+    section.demo > h2 b { color: var(--accent); font-family: ui-monospace, Menlo, monospace; font-size: 1.05rem; }
+    .lead { margin: 0 0 20px; color: var(--muted); }
     .grid { display: grid; grid-template-columns: minmax(0, 440px) minmax(0, 1fr); gap: 28px; align-items: start; }
     .grid > * { min-width: 0; }
     @media (max-width: 820px) { .grid { grid-template-columns: 1fr; } }
-    label { flex-wrap: wrap; }
-    select { max-width: 100%; }
     .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 16px; padding: 18px; }
-    .panel h2 { margin: 0 0 12px; font-size: 1rem; }
+    .panel h3 { margin: 0 0 12px; font-size: 1rem; }
     .panel + .panel { margin-top: 16px; }
-    label { display: flex; align-items: center; gap: 10px; margin: 8px 0; font-size: .9rem; }
+    label { display: flex; align-items: center; gap: 10px; margin: 8px 0; font-size: .9rem; flex-wrap: wrap; }
     label span { min-width: 140px; color: var(--muted); }
     input[type="range"] { flex: 1; accent-color: var(--accent); }
-    select { font: inherit; padding: 4px 8px; border-radius: 8px; border: 1px solid var(--line); background: var(--panel); color: var(--ink); }
+    select { max-width: 100%; font: inherit; padding: 4px 8px; border-radius: 8px; border: 1px solid var(--line); background: var(--panel); color: var(--ink); }
     output { min-width: 44px; text-align: right; font-variant-numeric: tabular-nums; }
-    #log { margin: 0; padding: 10px; height: 180px; overflow: auto; border-radius: 10px; background: rgba(0,0,0,.05); font: .78rem/1.5 ui-monospace, Menlo, monospace; white-space: pre-wrap; }
+    .log { margin: 0; padding: 10px; height: 170px; overflow: auto; border-radius: 10px; background: rgba(0,0,0,.05); font: .78rem/1.5 ui-monospace, Menlo, monospace; white-space: pre-wrap; }
     pre.code { margin: 0; padding: 12px; overflow: auto; border-radius: 10px; background: #1f130c; color: #ffd9bd; font: .8rem/1.5 ui-monospace, Menlo, monospace; }
     .note { font-size: .82rem; color: var(--muted); }
     button.small { font: inherit; font-size: .85rem; padding: 6px 12px; border-radius: 8px; border: 1px solid var(--line); background: var(--panel); color: var(--ink); cursor: pointer; }
+    .secret { display: inline-block; padding: 4px 12px; border-radius: 8px; background: #1f130c; color: #ffd36b; font: 700 1.3rem ui-monospace, Menlo, monospace; letter-spacing: .18em; }
   </style>
 </head>
 <body>
   <main>
-    <h1>ui-vuivui · <b>&lt;vv-basket-upload&gt;</b></h1>
-    <p class="lead">Kéo file từ máy vào thẻ bên dưới (hoặc bấm nút) — file thành quả bóng và bay vào rổ.</p>
+    <header>
+      <h1>ui-vuivui</h1>
+      <p>Web Component vui vẻ cho các thao tác thường gặp. Mỗi thẻ làm việc thật — chỉ có lớp “da” là trò chơi.</p>
+      <nav>
+        <a href="#upload">🏀 Ném file vào rổ</a>
+        <a href="#otp">🎯 Bắn OTP bằng ná</a>
+        <a href="https://github.com/bangluutru/ui-vuivui">GitHub</a>
+      </nav>
+    </header>
 
-    <div class="grid">
-      <vv-basket-upload id="up" multiple sound max-size="20MB"></vv-basket-upload>
-
-      <div>
-        <section class="panel">
-          <h2>Thử nghiệm</h2>
-          <label><span>Ngôn ngữ</span>
-            <select id="lang"><option value="vi">Tiếng Việt</option><option value="en">English</option></select>
-          </label>
-          <label><span>Uploader</span>
-            <select id="mode">
-              <option value="fake">Giả lập (demo, không gửi file)</option>
-              <option value="none">Không có (xem khi app quên nối máy chủ)</option>
-            </select>
-          </label>
-          <label><span>Thời gian tải / file</span><input id="secs" type="range" min="0.4" max="6" step="0.2" value="1.8"><output id="secsOut"></output></label>
-          <label><span>Tỉ lệ trượt rổ (lỗi)</span><input id="miss" type="range" min="0" max="1" step="0.05" value="0.2"><output id="missOut"></output></label>
-          <label><span>Chỉ nhận</span>
-            <select id="accept">
-              <option value="">Mọi loại file</option>
-              <option value="image/*">Ảnh (image/*)</option>
-              <option value=".pdf,application/pdf">PDF</option>
-            </select>
-          </label>
-          <p><button class="small" id="clear" type="button">Xóa hết danh sách</button></p>
-          <p class="note">Âm thanh bật/tắt bằng nút loa trên thẻ. Bật “Giảm chuyển động” trong cài đặt máy để xem chế độ không hoạt hình.</p>
-        </section>
-
-        <section class="panel">
-          <h2>Sự kiện</h2>
-          <pre id="log"></pre>
-        </section>
-
-        <section class="panel">
-          <h2>Cách dùng</h2>
-<pre class="code">&lt;script type="module"&gt;
-  import { xhrUploader } from 'ui-vuivui';
-  const up = document.querySelector('vv-basket-upload');
-  up.uploader = xhrUploader('/api/upload', { fieldName: 'file' });
-  up.addEventListener('vv-uploaded', (e) =&gt; console.log(e.detail.result));
-&lt;/script&gt;
+    <!-- ================= Upload ================= -->
+    <section class="demo" id="upload">
+      <h2>Ném file vào rổ · <b>&lt;vv-basket-upload&gt;</b></h2>
+      <p class="lead">Kéo file từ máy vào thẻ (hoặc bấm nút — trên điện thoại chỉ có cách này) — file thành quả bóng và bay vào rổ.</p>
+      <div class="grid">
+        <vv-basket-upload id="up" multiple sound max-size="20MB"></vv-basket-upload>
+        <div>
+          <div class="panel">
+            <h3>Thử nghiệm</h3>
+            <label><span>Ngôn ngữ</span>
+              <select id="lang"><option value="vi">Tiếng Việt</option><option value="en">English</option></select>
+            </label>
+            <label><span>Uploader</span>
+              <select id="mode">
+                <option value="fake">Giả lập (demo, không gửi file)</option>
+                <option value="none">Không có (xem khi app quên nối máy chủ)</option>
+              </select>
+            </label>
+            <label><span>Thời gian tải / file</span><input id="secs" type="range" min="0.4" max="6" step="0.2" value="1.8"><output id="secsOut"></output></label>
+            <label><span>Tỉ lệ trượt rổ (lỗi)</span><input id="miss" type="range" min="0" max="1" step="0.05" value="0.2"><output id="missOut"></output></label>
+            <label><span>Chỉ nhận</span>
+              <select id="accept">
+                <option value="">Mọi loại file</option>
+                <option value="image/*">Ảnh (image/*)</option>
+                <option value=".pdf,application/pdf">PDF</option>
+              </select>
+            </label>
+            <p><button class="small" id="clear" type="button">Xóa hết danh sách</button></p>
+            <p class="note">Âm thanh bật/tắt bằng nút loa trên thẻ. Bật “Giảm chuyển động” trong cài đặt máy để xem chế độ không hoạt hình.</p>
+          </div>
+          <div class="panel">
+            <h3>Sự kiện</h3>
+            <pre class="log" id="logUp"></pre>
+          </div>
+          <div class="panel">
+            <h3>Cách dùng</h3>
+<pre class="code">import { xhrUploader } from 'ui-vuivui';
+const up = document.querySelector('vv-basket-upload');
+up.uploader = xhrUploader('/api/upload', { fieldName: 'file' });
+up.addEventListener('vv-uploaded', (e) =&gt; console.log(e.detail.result));
 
 &lt;vv-basket-upload multiple sound accept="image/*" max-size="10MB"&gt;
 &lt;/vv-basket-upload&gt;</pre>
-        </section>
+          </div>
+        </div>
       </div>
-    </div>
+    </section>
+
+    <!-- ================= OTP ================= -->
+    <section class="demo" id="otp">
+      <h2>Bắn OTP bằng ná · <b>&lt;vv-slingshot-otp&gt;</b></h2>
+      <p class="lead">Giữ một số, kéo xuống để căng dây và nhắm — đường chấm xanh là sẽ trúng ô. Chạm nhẹ một số để bắn tự động, hoặc gõ / dán mã.</p>
+      <div class="grid">
+        <vv-slingshot-otp id="otp-el" name="Drake Le" sound></vv-slingshot-otp>
+        <div>
+          <div class="panel">
+            <h3>Thử nghiệm</h3>
+            <p>Mã đúng của máy chủ demo: <span class="secret" id="secret"></span></p>
+            <p class="note">Trong app thật, mã được gửi qua SMS/email và chỉ máy chủ biết. Thẻ không bao giờ báo đúng/sai từng chữ số — chỉ kiểm tra cả mã một lần.</p>
+            <label><span>Máy chủ</span>
+              <select id="otpMode">
+                <option value="ok">Kiểm tra mã bình thường</option>
+                <option value="network">Lỗi mạng (giữ mã, cho thử lại)</option>
+                <option value="none">Không có verifier</option>
+              </select>
+            </label>
+            <label><span>Độ dài mã</span>
+              <select id="otpLen"><option>4</option><option selected>6</option><option>8</option></select>
+            </label>
+            <label><span>Ngôn ngữ</span>
+              <select id="otpLang"><option value="vi">Tiếng Việt</option><option value="en">English</option></select>
+            </label>
+            <p><button class="small" id="otpNew" type="button">Mã mới + làm lại</button></p>
+          </div>
+          <div class="panel">
+            <h3>Sự kiện</h3>
+            <pre class="log" id="logOtp"></pre>
+          </div>
+          <div class="panel">
+            <h3>Cách dùng</h3>
+<pre class="code">import { jsonVerifier } from 'ui-vuivui';
+const otp = document.querySelector('vv-slingshot-otp');
+// Máy chủ nhận { code } và trả { ok: true|false, message? }
+otp.verifier = jsonVerifier('/api/otp/verify');
+otp.addEventListener('vv-continue', () =&gt; location.href = '/app');
+
+&lt;vv-slingshot-otp length="6" name="Lan" sound&gt;&lt;/vv-slingshot-otp&gt;</pre>
+          </div>
+        </div>
+      </div>
+    </section>
   </main>
 
   <script type="module">
     import './src/index.js';
     import { fakeUploader } from './demo/fake-uploader.js';
+    import { fakeVerifier, randomCode } from './demo/fake-verifier.js';
 
-    const up = document.getElementById('up');
     const $ = (id) => document.getElementById(id);
-    const log = $('log');
+    const logger = (el) => (line) => {
+      const t = new Date().toLocaleTimeString();
+      el.textContent = `${t}  ${line}\n${el.textContent}`.slice(0, 6000);
+    };
 
-    function apply() {
+    // ----- Upload -----
+    const up = $('up');
+    function applyUp() {
       $('secsOut').textContent = `${$('secs').value}s`;
       $('missOut').textContent = `${Math.round($('miss').value * 100)}%`;
       up.uploader = $('mode').value === 'fake'
@@ -118,20 +179,42 @@
       up.setAttribute('lang', $('lang').value);
       $('accept').value ? up.setAttribute('accept', $('accept').value) : up.removeAttribute('accept');
     }
-    ['secs', 'miss', 'mode', 'lang', 'accept'].forEach((id) => $(id).addEventListener('input', apply));
+    ['secs', 'miss', 'mode', 'lang', 'accept'].forEach((id) => $(id).addEventListener('input', applyUp));
     $('clear').addEventListener('click', () => up.clear());
-    apply();
+    applyUp();
+    const wu = logger($('logUp'));
+    up.addEventListener('vv-select', (e) => wu(`vv-select   ${e.detail.items.map((i) => i.name).join(', ')}`));
+    up.addEventListener('vv-uploaded', (e) => wu(`vv-uploaded ${e.detail.item.name}`));
+    up.addEventListener('vv-error', (e) => wu(`vv-error    ${e.detail.item.name}: ${e.detail.error.message}`));
+    up.addEventListener('vv-reject', (e) => wu(`vv-reject   ${e.detail.file.name} (${e.detail.reason})`));
+    up.addEventListener('vv-remove', (e) => wu(`vv-remove   ${e.detail.item.name}`));
+    up.addEventListener('vv-drain', () => wu('vv-drain    hàng chờ trống'));
 
-    const write = (line) => {
-      const t = new Date().toLocaleTimeString();
-      log.textContent = `${t}  ${line}\n${log.textContent}`.slice(0, 6000);
-    };
-    up.addEventListener('vv-select', (e) => write(`vv-select   ${e.detail.items.map((i) => i.name).join(', ')}`));
-    up.addEventListener('vv-uploaded', (e) => write(`vv-uploaded ${e.detail.item.name}`));
-    up.addEventListener('vv-error', (e) => write(`vv-error    ${e.detail.item.name}: ${e.detail.error.message}`));
-    up.addEventListener('vv-reject', (e) => write(`vv-reject   ${e.detail.file.name} (${e.detail.reason})`));
-    up.addEventListener('vv-remove', (e) => write(`vv-remove   ${e.detail.item.name}`));
-    up.addEventListener('vv-drain', () => write('vv-drain    hàng chờ trống'));
+    // ----- OTP -----
+    const otp = $('otp-el');
+    let secret = '';
+    function newCode() {
+      secret = randomCode(+$('otpLen').value);
+      $('secret').textContent = secret;
+    }
+    function applyOtp() {
+      otp.setAttribute('length', $('otpLen').value);
+      otp.setAttribute('lang', $('otpLang').value);
+      const mode = $('otpMode').value;
+      otp.verifier = mode === 'none' ? null : fakeVerifier(() => secret, { mode });
+    }
+    $('otpMode').addEventListener('input', applyOtp);
+    $('otpLang').addEventListener('input', applyOtp);
+    $('otpLen').addEventListener('input', () => { newCode(); applyOtp(); otp.reset(); });
+    $('otpNew').addEventListener('click', () => { newCode(); otp.reset(); });
+    newCode();
+    applyOtp();
+    const wo = logger($('logOtp'));
+    otp.addEventListener('vv-complete', (e) => wo(`vv-complete ${e.detail.code}`));
+    otp.addEventListener('vv-verified', (e) => wo(`vv-verified ${e.detail.code}`));
+    otp.addEventListener('vv-rejected', (e) => wo(`vv-rejected ${e.detail.code}: ${e.detail.message}`));
+    otp.addEventListener('vv-error', (e) => wo(`vv-error    ${e.detail.code}: ${e.detail.error.message}`));
+    otp.addEventListener('vv-continue', () => { wo('vv-continue → app sẽ chuyển trang ở đây'); });
   </script>
 </body>
 </html>

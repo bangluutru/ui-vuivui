@@ -78,6 +78,4 @@ export const LABELS = {
   },
 };
 
-export function fmt(str, vars = {}) {
-  return String(str).replace(/\{(\w+)\}/g, (_, k) => (vars[k] ?? ''));
-}
+export { fmt } from '../core/i18n.js';

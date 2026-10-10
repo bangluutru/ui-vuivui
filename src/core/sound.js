@@ -68,6 +68,18 @@ const SOUNDS = {
     tone(ac, { freq: 880, type: 'square', peak: 0.05, decay: 0.12 });
     tone(ac, { freq: 1320, type: 'square', peak: 0.05, decay: 0.2, start: 0.1 });
   },
+  /** kẽo kẹt — kéo dây ná */
+  stretch: (ac) => tone(ac, { freq: 180, to: 420, type: 'triangle', peak: 0.05, attack: 0.02, decay: 0.25 }),
+  /** pưng — buông dây ná */
+  twang: (ac) => {
+    tone(ac, { freq: 520, to: 140, type: 'sawtooth', peak: 0.09, decay: 0.22 });
+    noise(ac, { dur: 0.18, peak: 0.08, freq: 1800, to: 600, q: 2 });
+  },
+  /** cộp — đạn trúng ô */
+  thunk: (ac) => {
+    tone(ac, { freq: 300, to: 120, type: 'sine', peak: 0.3, decay: 0.12 });
+    noise(ac, { dur: 0.06, peak: 0.12, filter: 'lowpass', freq: 1200 });
+  },
   /** bíp — lỗi / bị loại */
   buzz: (ac) => tone(ac, { freq: 180, type: 'sawtooth', peak: 0.08, decay: 0.3 }),
 };

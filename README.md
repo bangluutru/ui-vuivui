@@ -7,7 +7,7 @@ Thư viện **Web Component vui vẻ** cho các thao tác thường gặp — up
 | Thành phần | Trạng thái |
 |---|---|
 | `<vv-basket-upload>` — ném file vào rổ để upload | ✅ v0.1 |
-| Bắn OTP bằng ná (`<vv-slingshot-otp>`) | dự kiến |
+| `<vv-slingshot-otp>` — bắn từng số OTP vào ô bằng ná cao su | ✅ v0.1 |
 | Đăng nhập Halloween với đèn pin soi mật khẩu | dự kiến |
 | Ném đề vào máy in (`<vv-print>`) | dự kiến |
 | Captcha vui (vỏ trò chơi bọc captcha thật: Cap / ALTCHA / Turnstile) | dự kiến |
@@ -106,6 +106,51 @@ Dùng `XMLHttpRequest` vì chỉ XHR báo được tiến trình upload (`fetch`
 ### Đổi màu
 
 Đặt biến CSS trên chính thẻ: `--vv-accent`, `--vv-accent-2`, `--vv-ink`, `--vv-muted`, `--vv-paper`, `--vv-court`, `--vv-head`, `--vv-ok`, `--vv-bad`, `--vv-radius`, `--vv-font`. Các phần `::part(card|header|dropzone|list|button|scoreboard|sound-button)` cũng chỉnh được.
+
+## `<vv-slingshot-otp>`
+
+![Bắn OTP bằng ná](docs/demo-slingshot-otp.jpg)
+
+Giữ một số → số nạp vào túi ná · kéo để căng dây và nhắm (đường chấm **xanh** = sẽ trúng ô) · thả tay để bắn.
+Trúng ô nào điền ô đó (bắn đè để sửa), trượt thì số quay về. **Chạm nhẹ** một số = tự bắn vào ô đang chờ.
+Gõ phím, dán mã, Backspace và tự điền mã từ SMS (`autocomplete="one-time-code"`) đều dùng được.
+Đủ số → gọi `verifier(code)` **một lần cho cả mã**.
+
+```html
+<script type="module">
+  import { jsonVerifier } from 'ui-vuivui';
+  const otp = document.querySelector('vv-slingshot-otp');
+  otp.verifier = jsonVerifier('/api/otp/verify'); // máy chủ nhận { code } → trả { ok, message? }
+  otp.addEventListener('vv-continue', () => (location.href = '/app'));
+</script>
+
+<vv-slingshot-otp length="6" name="Lan" sound></vv-slingshot-otp>
+```
+
+**Bảo mật:** thẻ không biết mã đúng và **không báo đúng/sai từng chữ số** (video gốc làm vậy — để lộ mã chỉ sau tối đa 60 lần thử). Giới hạn số lần thử, hết hạn mã… là việc của máy chủ.
+
+| Thuộc tính HTML | |
+|---|---|
+| `length` | số chữ số, 4–8 (mặc định 6) |
+| `name` | tên để chào ("Chào Lan,") |
+| `sound` · `lang` · `disabled` | như `<vv-basket-upload>` |
+| `no-auto-submit` | không tự gửi khi đủ số (người dùng bấm *Xác nhận*) |
+| `autofocus` | focus ô nhập khi hiện (bỏ qua trên máy cảm ứng để bàn phím ảo không che ná) |
+
+| JS | |
+|---|---|
+| `verifier` | **Bắt buộc.** `(code: string) => Promise<boolean \| {ok, message?}>`. `ok:false` = mã sai (rung, xóa, nhập lại). **Ném lỗi** = lỗi mạng (giữ mã, nút *Thử lại*). Thiếu verifier → báo lỗi, không bao giờ "thành công". |
+| `value` · `reset()` · `focus()` · `labels` | |
+
+| Sự kiện | `detail` |
+|---|---|
+| `vv-complete` | `{ code }` — vừa đủ số, sắp kiểm tra |
+| `vv-verified` | `{ code, verdict }` |
+| `vv-rejected` | `{ code, message }` |
+| `vv-error` | `{ code, error }` |
+| `vv-continue` | `{ code }` — bấm nút trên màn hình thành công |
+
+`jsonVerifier(url, { field = 'code', headers, extra, credentials })`: POST JSON; 2xx → `{ ok, message }`; 400/401/422 kèm `{ ok:false }` → mã sai; mã lỗi khác → ném `VerifyHttpError`.
 
 ## Nguyên tắc chung của thư viện
 
