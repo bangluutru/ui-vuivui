@@ -10,7 +10,8 @@
     ".": "./src/index.js",
     "./basket-upload": "./src/basket-upload/basket-upload.js",
     "./core": "./src/core/index.js",
-    "./dist/*": "./dist/*"
+    "./dist/*": "./dist/*",
+    "./slingshot-otp": "./src/slingshot-otp/slingshot-otp.js"
   },
   "files": [
     "dist",
@@ -18,7 +19,7 @@
   ],
   "sideEffects": [
     "./src/index.js",
-    "./src/basket-upload/basket-upload.js",
+    "./src/*/*.js",
     "./dist/*.js"
   ],
   "scripts": {

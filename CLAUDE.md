@@ -11,6 +11,7 @@ Thư viện Web Component "vui vẻ" cho thao tác thường gặp (upload, in, 
 - `tests/` — Vitest cho phần lõi.
 
 ## Quy ước
+- Thẻ mới: đặt file element ở `src/<thu-muc>/<ten>.js` (khớp `sideEffects: ./src/*/*.js`) và xuất trong `src/index.js` — `tests/package.test.js` kiểm tra, thiếu là bản build mất lệnh đăng ký thẻ.
 - Tên thẻ `vv-<việc>` hoặc `vv-<chủ-đề>-<việc>`; sự kiện `vv-*` có `bubbles + composed`.
 - Không thêm thư viện runtime nếu không thật cần (hiện 0 phụ thuộc). Mượn mã: chỉ MIT/ISC/Apache, ghi nguồn. Không dùng Aceternity, hover.dev, hàng Framer, mã GPL.
 - Element không bao giờ giả lập thành công: thiếu `uploader`/backend → báo lỗi rõ ràng.
