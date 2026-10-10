@@ -302,7 +302,7 @@ Chỉ nghe ở `127.0.0.1`; mã bí mật mới mỗi lần chạy (gửi trong 
 
 ## `<vv-basket-shot>`
 
-Ném **một** quả bóng vào rổ để xác nhận một việc — ví dụ trước khi mở hộp thoại in. Giữ bóng và kéo: bóng đi theo tay (trong nửa dưới sân), đường chấm vẽ từ chỗ bóng đang đứng (**xanh** = sẽ vào); hướng và độ dài kéo là hướng và lực ném; thả tay để ném; bóng phải rơi xuống qua vành mới tính — có thể **chạm vành** hoặc **trượt**. Chạm nhẹ quả bóng / nhấn Enter → ném chuẩn, luôn vào.
+Ném **một** quả bóng vào rổ để xác nhận một việc — ví dụ trước khi mở hộp thoại in. Giữ bóng và di chuyển tự do trong sân; cú ném **luôn hướng lên, về phía rổ** và chỉ phụ thuộc chỗ bóng đứng: đứng ở khoảng cách hợp lý → vào (đường chấm **xanh**), gần quá → quá đà, xa quá → hụt, ngay dưới rổ → đập đáy vành; chữ hướng dẫn nói nên lùi hay tiến; thả tay để ném; bóng phải rơi xuống qua vành mới tính — có thể **chạm vành** hoặc **trượt**. Chạm nhẹ quả bóng / nhấn Enter → ném chuẩn, luôn vào.
 
 ```html
 <vv-basket-shot lang="ja" sound></vv-basket-shot>
@@ -312,7 +312,7 @@ Ném **một** quả bóng vào rổ để xác nhận một việc — ví dụ
 </script>
 ```
 
-Sự kiện: `vv-score` `{ method: 'throw'|'tap'|'keyboard', shots }` · `vv-miss` `{ result: 'rim'|'air'|'short', shots }`. Phương thức `reset()`. Ngôn ngữ: `vi` · `ja` · `en`.
+Sự kiện: `vv-score` `{ method: 'throw'|'tap'|'keyboard', shots }` · `vv-miss` `{ result: 'rim'|'block'|'air'|'short', shots }`. Phương thức `reset()`. Ngôn ngữ: `vi` · `ja` · `en`.
 
 ## Nguyên tắc chung của thư viện
 

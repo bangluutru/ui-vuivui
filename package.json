@@ -1,6 +1,6 @@
 {
   "name": "ui-vuivui",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "description": "Thư viện Web Component vui vẻ cho các thao tác thường gặp: upload, in, đăng nhập, OTP, captcha…",
   "type": "module",
   "license": "MIT",

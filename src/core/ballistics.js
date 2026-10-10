@@ -82,10 +82,19 @@ export function samplePath(start, vel, g, { tUntil = 1.2, step = 1 / 60, bounds 
  * @param {{x,y}} start  @param {{vx,vy}} vel  @param {number} g
  * @param {{x:number, y:number, half:number}} rim  tâm vành và nửa độ rộng trong lòng vành
  * @param {number} ballR bán kính bóng
- * @returns {{ result: 'swish'|'rim'|'air'|'short', t: number|null, point: {x,y}|null }}
- *   swish = lọt lưới · rim = chạm vành bật ra · air = trượt hẳn · short = không tới độ cao vành
+ * @returns {{ result: 'swish'|'rim'|'block'|'air'|'short', t: number|null, point: {x,y}|null }}
+ *   swish = lọt lưới · rim = chạm vành bật ra · block = bay LÊN đập đáy vành (đứng ngay dưới rổ)
+ *   air = trượt hẳn · short = không tới độ cao vành
  */
 export function resolveHoopShot(start, vel, g, rim, ballR) {
+  // Đang bay lên mà đi qua vùng vành từ bên dưới → đập đáy vành, không thể lọt lưới.
+  if (start.y > rim.y) {
+    const tUp = timeToReachY(start, vel, g, rim.y);
+    if (tUp != null && vel.vy + g * tUp < 0) {
+      const pu = positionAt(start, vel, g, tUp);
+      if (Math.abs(pu.x - rim.x) <= rim.half + ballR) return { result: 'block', t: tUp, point: pu };
+    }
+  }
   const t = timeToReachY(start, vel, g, rim.y, { descending: true });
   if (t == null) return { result: 'short', t: null, point: null };
   const point = positionAt(start, vel, g, t);

@@ -1,9 +1,10 @@
 // <vv-basket-shot> — ném một quả bóng vào rổ để "xác nhận" một việc (vd. trước khi in).
 //
-//   Giữ bóng và kéo: bóng đi theo tay (trong nửa dưới sân); hướng + độ dài từ chỗ cầm bóng
-//   tới chỗ bóng đang đứng là hướng + lực ném. Đường chấm vẽ từ vị trí hiện tại (xanh = sẽ vào).
-//   Thả tay → bóng bay từ đúng chỗ đó.
-//   Bóng phải RƠI XUỐNG qua vành: lọt lưới → sự kiện `vv-score`; chạm vành / trượt → ném lại.
+//   Giữ bóng và di chuyển tự do trong sân. Cú ném LUÔN hướng lên và về phía rổ, chỉ phụ thuộc
+//   CHỖ BÓNG ĐỨNG (như một cầu thủ ném cùng một động tác): đứng ở khoảng cách hợp lý → vào rổ;
+//   gần quá → quá đà; xa quá → hụt; ngay dưới rổ → đập đáy vành. Đường chấm vẽ từ quả bóng
+//   (xanh = sẽ vào). Thả tay → ném từ đúng chỗ đó.
+//   Bóng phải RƠI XUỐNG qua vành: lọt lưới → sự kiện `vv-score`; còn lại → ném lại.
 //   Chạm nhẹ quả bóng hoặc nhấn Enter/Space → ném chuẩn, luôn vào (ai cũng dùng được).
 //
 // Sự kiện: `vv-score` { method: 'throw'|'tap'|'keyboard', shots }, `vv-miss` { result, shots }.
@@ -19,7 +20,9 @@ import { LABELS } from './labels.js';
 const BALL = 34;
 const R = BALL / 2;
 const GRAVITY = 1300;    // px/s²
-const MAX_DRAG = 150;    // px kéo tối đa (độ dài ứng với lực mạnh nhất)
+// Vùng ném vào: khoảng cách từ bóng tới tâm vành, theo bề ngang sân (tối thiểu 380px).
+const ZONE_MIN = 0.27;
+const ZONE_MAX = 0.62;
 const SLOWMO = 0.75;
 const RIM_HALF = 34 / 160; // nửa độ rộng lòng vành / bề ngang hình rổ
 
@@ -45,7 +48,7 @@ button { font: inherit; color: inherit; }
 .sound { width: 32px; height: 32px; padding: 0; border: 0; border-radius: 50%; cursor: pointer; display: grid; place-items: center; background: transparent; color: var(--vv-muted); }
 .sound[aria-pressed="true"] { color: var(--vv-accent); background: rgba(242,106,27,.12); }
 .sound svg { width: 18px; height: 18px; }
-.court { position: relative; height: 290px; touch-action: none; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none;
+.court { position: relative; height: 330px; touch-action: none; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none;
   background: radial-gradient(circle at 50% 125%, transparent 0 120px, var(--vv-line) 121px 123px, transparent 124px); }
 .hoop { position: relative; width: 140px; aspect-ratio: 160 / 130; margin: 6px auto 0; }
 .hoop-back, .hoop-front { position: absolute; inset: 0; }
@@ -179,7 +182,9 @@ export class VvBasketShot extends HTMLElement {
     const H = court.clientHeight;
     if (!W) return;
     if (randomize || !this._home) {
-      const x = W * (0.22 + Math.random() * 0.56);
+      // Chỗ đứng ban đầu: lệch sang trái hoặc phải rổ (không bao giờ ngay dưới rổ → chạm nhẹ luôn vào).
+      const off = Math.min(W / 2 - R - 6, 85 + Math.random() * 45); // ≥ 85px khỏi tâm rổ theo chiều ngang
+      const x = W / 2 + (Math.random() < 0.5 ? -off : off);
       this._home = { fx: x / W, y: H - R - 18 };
     }
     this._place({ x: this._home.fx * W, y: this._home.y });
@@ -204,26 +209,34 @@ export class VvBasketShot extends HTMLElement {
     return { left: -60, right: c.clientWidth + 60, top: -400, bottom: c.clientHeight + 60 };
   }
 
-  _maxSpeed(start, rim) {
-    const h = Math.max(80, start.y - rim.y + 90);
-    return Math.sqrt(2 * GRAVITY * h * 1.9);
+
+  /**
+   * Cú ném từ vị trí `start`: cùng một động tác (cung chuẩn vào tâm vành) nhưng lực lệch theo
+   * khoảng cách — gần hơn vùng hợp lý thì mạnh quá (quá đà), xa hơn thì yếu (hụt).
+   * @returns {{ vel: {vx,vy}, zone: 'ok'|'close'|'far' }}
+   */
+  _aimVelocity(start, rim) {
+    // Sân hẹp (điện thoại) vẫn cao như sân rộng → tính vùng theo bề ngang nhưng không nhỏ hơn 380px.
+    const W = Math.max(380, this._el.court.clientWidth || 0);
+    const d = Math.hypot(rim.x - start.x, rim.y - start.y);
+    const lo = W * ZONE_MIN;
+    const hi = W * ZONE_MAX;
+    // Điểm rơi lệch khỏi tâm vành: 0 trong vùng hợp lý; ra ngoài thì lệch ≥ 28px (chạm vành)
+    // và lệch thêm khi càng xa vùng (trượt hẳn). Gần quá → rơi QUÁ ra sau vành; xa quá → rơi TRƯỚC vành.
+    let err = 0;
+    let zone = 'ok';
+    if (d < lo) { err = 28 + 140 * (lo - d) / lo; zone = 'close'; }
+    else if (d > hi) { err = -(28 + 200 * Math.min(1, (d - hi) / hi)); zone = 'far'; }
+    const away = start.x <= rim.x ? 1 : -1; // hướng từ chỗ đứng đi qua rổ
+    return { vel: this._perfectVelocity(start, rim, rim.x + away * err), zone };
   }
 
-  /** Vận tốc theo hướng & độ dài kéo (kéo VỀ PHÍA rổ để ném về phía đó). */
-  _velocityFromDrag(dx, dy, start, rim) {
-    const len = Math.hypot(dx, dy);
-    if (len < 1) return { vx: 0, vy: 0, power: 0 };
-    const power = Math.min(1, len / MAX_DRAG);
-    const speed = this._maxSpeed(start, rim) * power;
-    return { vx: (dx / len) * speed, vy: (dy / len) * speed, power };
-  }
-
-  /** Cú ném chuẩn: đỉnh cung cao hơn vành ~80px, rơi đúng tâm vành. */
-  _perfectVelocity(start, rim) {
+  /** Cú ném chuẩn: đỉnh cung cao hơn vành ~80px, rơi xuống ở x = tx (mặc định tâm vành). */
+  _perfectVelocity(start, rim, tx = rim.x) {
     const apexY = Math.min(rim.y - 80, start.y - 60);
     const vy = -Math.sqrt(2 * GRAVITY * (start.y - apexY));
     const t = timeToReachY(start, { vx: 0, vy }, GRAVITY, rim.y, { descending: true });
-    return { vx: (rim.x - start.x) / t, vy };
+    return { vx: (tx - start.x) / t, vy };
   }
 
   // ---------- Kéo – thả ----------
@@ -257,12 +270,9 @@ export class VvBasketShot extends HTMLElement {
       const p = this._toCourt(e2.clientX, e2.clientY);
       if (Math.hypot(p.x - g.start.x, p.y - g.start.y) > 8) g.moved = true;
       if (!g.moved) return;
-      const want = { x: p.x - g.grab.x, y: p.y - g.grab.y };
-      g.cur = this._clampBall(want);
-      // Lực + hướng theo chỗ NGÓN TAY (kéo quá mép giới hạn vẫn mạnh thêm); bóng dừng ở mép.
-      g.dx = want.x - g.origin.x;
-      g.dy = want.y - g.origin.y;
-      this._place(g.cur, g.dx / 3);
+      g.cur = this._clampBall({ x: p.x - g.grab.x, y: p.y - g.grab.y });
+      g.dx = g.cur.x - g.origin.x;
+      this._place(g.cur, g.dx / 4);
       this._drawAim(g);
     };
     g.onUp = (e2) => { if (e2.pointerId === g.id) this._release(g); };
@@ -299,7 +309,7 @@ export class VvBasketShot extends HTMLElement {
     const H = c.clientHeight;
     return {
       x: Math.max(R + 2, Math.min(W - R - 2, p.x)),
-      y: Math.max(Math.min(rim.y + 90, H - R - 2), Math.min(H - R - 2, p.y)),
+      y: Math.max(Math.min(rim.y + 45, H - R - 2), Math.min(H - R - 2, p.y)),
     };
   }
 
@@ -312,14 +322,24 @@ export class VvBasketShot extends HTMLElement {
   _drawAim(g) {
     const start = g.cur;
     const rim = this._rim();
-    const v = this._velocityFromDrag(g.dx, g.dy, start, rim);
     const aim = this._el.aim;
-    if (!g.moved || v.power < 0.08) { aim.setAttribute('d', ''); return; }
-    const res = resolveHoopShot(start, v, GRAVITY, rim, R);
-    const pts = samplePath(start, v, GRAVITY, { tUntil: res.t ?? 1.6, bounds: this._bounds() });
+    if (!g.moved) { aim.setAttribute('d', ''); return; }
+    const { vel, zone } = this._aimVelocity(start, rim);
+    const res = resolveHoopShot(start, vel, GRAVITY, rim, R);
+    const pts = samplePath(start, vel, GRAVITY, { tUntil: res.t ?? 1.6, bounds: this._bounds() });
     aim.setAttribute('d', pts.map((q, i) => `${i ? 'L' : 'M'}${q.x.toFixed(1)} ${q.y.toFixed(1)}`).join(' '));
     aim.setAttribute('class', `aim ${res.result === 'swish' ? 'good' : 'bad'}`);
-    this._el.status.textContent = res.result === 'swish' ? this._labels.aimGood : this._labels.aim;
+    this._el.status.textContent = this._advice(res.result, zone);
+  }
+
+  /** Lời khuyên theo kết quả dự đoán và vị trí. */
+  _advice(result, zone) {
+    const L = this._labels;
+    if (result === 'swish') return L.aimGood;
+    if (result === 'block') return L.under;
+    if (zone === 'close') return L.tooClose;
+    if (zone === 'far') return L.tooFar;
+    return L.aim;
   }
 
   _release(g) {
@@ -328,9 +348,7 @@ export class VvBasketShot extends HTMLElement {
     const rim = this._rim();
     // Không kéo = chạm nhẹ → ném chuẩn từ chỗ bóng đang nằm.
     if (!g.moved) { this._shoot(this._perfectVelocity(g.origin, rim), 'tap'); return; }
-    const v = this._velocityFromDrag(g.dx, g.dy, g.cur, rim);
-    if (v.power < 0.08) { this._setState('idle', ''); this._returnHome(g.cur); return; }
-    this._shoot(v, 'throw', g.cur);
+    this._shoot(this._aimVelocity(g.cur, rim).vel, 'throw', g.cur);
   }
 
   // ---------- Bay ----------
@@ -367,18 +385,18 @@ export class VvBasketShot extends HTMLElement {
       return;
     }
 
-    if (res.result === 'rim') {
+    if (res.result === 'rim' || res.result === 'block') {
       await fly(res.t);
       const hoop = this._el.hoop;
       hoop.classList.remove('clank'); void hoop.getBoundingClientRect(); hoop.classList.add('clank');
       this._sfx('rim');
       const from = this._pos;
       const side = from.x >= rim.x ? 1 : -1;
-      const v2 = { vx: side * 220, vy: -320 };
+      const v2 = res.result === 'block' ? { vx: side * 120, vy: 120 } : { vx: side * 220, vy: -320 };
       const tOut = 0.8;
       await tween({ duration: tOut * 1000 / SLOWMO, onUpdate: (k) => { const p = positionAt(from, v2, GRAVITY, k * tOut); this._place(p, -k * 300, 0.82); this._el.ball.style.opacity = String(k > 0.7 ? (1 - k) / 0.3 : 1); } });
       this._sfx('bounce');
-      this._missed('rim', this._labels.rim);
+      this._missed(res.result, res.result === 'block' ? this._labels.under : this._labels.rim);
       return;
     }
 
