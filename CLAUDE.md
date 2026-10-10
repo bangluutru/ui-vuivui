@@ -6,7 +6,7 @@ Thư viện Web Component "vui vẻ" cho thao tác thường gặp (upload, in, 
 - `src/core/` — lõi dùng chung, **không đụng DOM** để test được trong Node: `upload-queue.js`, `xhr-uploader.js`, `verifier.js`, `auth.js`, `ballistics.js` (ném xiên, trúng ô nào), `beam.js` (hình nón đèn pin, góc ±180°), `motion.js` (cung ném, tween), `sound.js` (Web Audio), `i18n.js`.
 - `src/<ten-thanh-phan>/` — mỗi "bộ da" một thư mục: element + `styles.js` + `art.js` (SVG tự vẽ) + `labels.js` (vi/en).
 - `src/index.js` — điểm vào, đăng ký mọi element.
-- `src/server/pow.js` — phía máy chủ captcha PoW (xuất `ui-vuivui/server`, KHÔNG nằm trong `src/index.js`). `worker/index.js` — Worker demo: `/api/pow/challenge`, `/api/pow/verify`; bí mật `POW_SECRET` (wrangler secret, không bao giờ ghi ra file).
+- `src/server/pow.js` — phía máy chủ captcha PoW (xuất `ui-vuivui/server`, KHÔNG nằm trong `src/index.js`). `worker/index.js` — Worker demo: `/api/pow/challenge`, `/api/pow/verify`; bí mật `POW_SECRET` (wrangler secret, không bao giờ ghi ra file); chống dùng lại bằng Durable Object `ReplayGuard` (SQLite). Bộ nhớ trong isolate KHÔNG đủ (đã lọt khi thử thật). Sau deploy, bản cũ còn chạy vài chục giây — kiểm tra header `x-vv-replay-guard`.
 - `index.html` + `demo/` — trang demo (mỗi thẻ một `<section>`). Uploader/verifier giả **chỉ** nằm trong `demo/`.
 - Deploy demo: `npm run deploy` → https://ui-vuivui.bangluutru.workers.dev (Workers static assets + Worker chỉ cho `/api/*`, `wrangler.jsonc`). Trang demo: localhost dùng máy chủ giả lập trong trình duyệt, trang thật dùng Worker — KHÔNG tự chuyển sang giả lập khi Worker lỗi.
 - `tests/` — Vitest cho phần lõi.

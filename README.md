@@ -235,7 +235,7 @@ const r = await verifyPow(form.get('captcha'), { secret: env.POW_SECRET });
 // r.ok → kiểm tra r.id CHƯA dùng (KV / DB), ghi nhớ tới r.expiresAt, rồi mới xử lý form
 ```
 
-Xem `worker/index.js` cho ví dụ đầy đủ (bản demo nhớ token đã dùng trong bộ nhớ — chỉ "cố gắng hết sức"; bản thật dùng KV / Durable Object / DB).
+Xem `worker/index.js` cho ví dụ đầy đủ: token đã dùng được ghi vào một **Durable Object** (SQLite, có trong gói miễn phí của Cloudflare) để mọi bản Worker cùng hỏi một chỗ. **Đừng** nhớ trong biến bộ nhớ: Cloudflare chạy nhiều bản Worker song song, gửi lại token vào bản khác sẽ lọt (đã thử thật trên trang demo).
 
 | Thuộc tính HTML | |
 |---|---|

@@ -1,8 +1,23 @@
 import { describe, it, expect, vi } from 'vitest';
-import worker from '../worker/index.js';
+import worker, { ReplayGuard } from '../worker/index.js';
 import { solvePowChallenge } from '../src/core/pow-solver.js';
 
-const env = { POW_SECRET: 'test-secret', ASSETS: { fetch: vi.fn(async () => new Response('static')) } };
+// Durable Object giả: chạy ReplayGuard thật trên một "SQLite" nhỏ trong bộ nhớ.
+function fakeSql() {
+  const rows = new Map();
+  return {
+    exec(q, ...a) {
+      if (q.startsWith('CREATE')) return { toArray: () => [] };
+      if (q.startsWith('DELETE')) { for (const [k, exp] of rows) if (exp < a[0]) rows.delete(k); return { toArray: () => [] }; }
+      if (q.startsWith('SELECT')) return { toArray: () => (rows.has(a[0]) ? [{ 1: 1 }] : []) };
+      if (q.startsWith('INSERT')) { rows.set(a[0], a[1]); return { toArray: () => [] }; }
+      throw new Error(q);
+    },
+  };
+}
+const guard = new ReplayGuard({ storage: { sql: fakeSql() }, blockConcurrencyWhile: (fn) => fn() });
+const REPLAY = { idFromName: () => 'global', get: () => ({ fetch: (u, init) => guard.fetch(new Request(u, init)) }) };
+const env = { POW_SECRET: 'test-secret', REPLAY, ASSETS: { fetch: vi.fn(async () => new Response('static')) } };
 const call = (path, init) => worker.fetch(new Request(`https://demo.test${path}`, init), env);
 const post = (path, body) => call(path, { method: 'POST', headers: { 'content-type': 'application/json' }, body: typeof body === 'string' ? body : JSON.stringify(body) });
 
@@ -37,6 +52,15 @@ describe('worker /api/pow', () => {
     expect((await call('/api/pow/verify')).status).toBe(405);
     expect((await call('/api/khong-co')).status).toBe(404);
   });
+
+  it('dùng lại bị từ chối kể cả khi hai lần gửi tới hai "isolate" khác nhau (cùng Durable Object)', async () => {
+    const mod = await import('../worker/index.js?isolate2');
+    const ch = await (await call('/api/pow/challenge')).json();
+    const { token } = await solvePowChallenge(ch, { worker: false });
+    const req = () => new Request('https://demo.test/api/pow/verify', { method: 'POST', body: JSON.stringify({ token }) });
+    expect(await (await worker.fetch(req(), env)).json()).toEqual({ ok: true });
+    expect(await (await mod.default.fetch(req(), env)).json()).toEqual({ ok: false, reason: 'reused' });
+  }, 30000);
 
   it('thiếu secret → 500, không tạo đề', async () => {
     const r = await worker.fetch(new Request('https://demo.test/api/pow/challenge'), { ASSETS: env.ASSETS });

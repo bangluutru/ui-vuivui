@@ -5,25 +5,48 @@
 //   POST /api/pow/verify     → { ok, reason? } — kiểm tra token, từ chối token đã dùng
 //
 // Bí mật ký đề: `POW_SECRET` (wrangler secret put POW_SECRET). Không bao giờ ghi vào code.
+// Chống dùng lại: Durable Object `ReplayGuard` (một bản duy nhất, SQLite) — mọi bản Worker ở
+// mọi nơi cùng hỏi một chỗ, nên token dùng rồi là bị từ chối ngay. Bộ nhớ trong isolate KHÔNG đủ:
+// Cloudflare chạy nhiều isolate, hai lần gửi có thể rơi vào hai isolate khác nhau.
 
 import { createPowChallenge, verifyPow } from '../src/server/pow.js';
 
 const DIFFICULTY = 50000; // số lần băm tối đa; trung bình trình duyệt thử một nửa
 const TTL_SECONDS = 600;
 
-// Chống dùng lại: nhớ các đề đã dùng TRONG BỘ NHỚ của isolate này — chỉ "cố gắng hết sức".
-// Bản thật phải dùng KV / Durable Object / DB để mọi máy chủ cùng biết.
-const used = new Map(); // id → expiresAt
+/** Durable Object nhớ các đề đã dùng cho tới khi hết hạn. */
+export class ReplayGuard {
+  constructor(ctx) {
+    this.ctx = ctx;
+    ctx.blockConcurrencyWhile(async () => {
+      ctx.storage.sql.exec('CREATE TABLE IF NOT EXISTS used (id TEXT PRIMARY KEY, exp INTEGER NOT NULL)');
+    });
+  }
 
-function rememberUsed(id, expiresAt) {
-  const now = Date.now();
-  if (used.size > 5000) for (const [k, exp] of used) if (exp < now) used.delete(k);
-  used.set(id, expiresAt);
+  async fetch(request) {
+    const { id, exp } = await request.json();
+    const sql = this.ctx.storage.sql;
+    // Các lệnh SQL đồng bộ, không có await xen giữa → kiểm tra + ghi là nguyên tử.
+    sql.exec('DELETE FROM used WHERE exp < ?', Date.now());
+    if (sql.exec('SELECT 1 FROM used WHERE id = ?', id).toArray().length) return Response.json({ fresh: false });
+    sql.exec('INSERT INTO used (id, exp) VALUES (?, ?)', id, exp);
+    return Response.json({ fresh: true });
+  }
 }
+
+/** true nếu token CHƯA từng dùng (và ghi nhớ lại). */
+async function claimOnce(env, id, exp) {
+  if (!env.REPLAY) throw new Error('Thiếu Durable Object REPLAY');
+  const stub = env.REPLAY.get(env.REPLAY.idFromName('global'));
+  const res = await stub.fetch('https://replay-guard/claim', { method: 'POST', body: JSON.stringify({ id, exp }) });
+  return (await res.json()).fresh === true;
+}
+
+const GUARD = 'durable-object'; // trả về trong header để biết bản đang chạy dùng cách chống dùng lại nào
 
 const json = (body, status = 200) => new Response(JSON.stringify(body), {
   status,
-  headers: { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-store' },
+  headers: { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-store', 'x-vv-replay-guard': GUARD },
 });
 
 export default {
@@ -48,8 +71,7 @@ export default {
       }
       const r = await verifyPow(token, { secret: env.POW_SECRET });
       if (!r.ok) return json(r, 400);
-      if (used.has(r.id)) return json({ ok: false, reason: 'reused' }, 400);
-      rememberUsed(r.id, r.expiresAt);
+      if (!(await claimOnce(env, r.id, r.expiresAt))) return json({ ok: false, reason: 'reused' }, 400);
       return json({ ok: true });
     }
 

@@ -2,6 +2,7 @@
   // ui-vuivui — trang demo trên Cloudflare Workers.
   // Trang tĩnh: demo-dist/ (npm run build:demo). Chỉ /api/* chạy Worker (captcha PoW).
   // Bí mật: wrangler secret put POW_SECRET
+  // Chống dùng lại token: Durable Object ReplayGuard (SQLite — có trong gói miễn phí).
   "$schema": "./node_modules/wrangler/config-schema.json",
   "name": "ui-vuivui",
   "main": "worker/index.js",
@@ -11,6 +12,10 @@
     "binding": "ASSETS",
     "run_worker_first": ["/api/*"]
   },
+  "durable_objects": {
+    "bindings": [{ "name": "REPLAY", "class_name": "ReplayGuard" }]
+  },
+  "migrations": [{ "tag": "v1", "new_sqlite_classes": ["ReplayGuard"] }],
   "workers_dev": true,
   "preview_urls": true
 }
