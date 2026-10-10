@@ -12,7 +12,9 @@
     "./core": "./src/core/index.js",
     "./dist/*": "./dist/*",
     "./slingshot-otp": "./src/slingshot-otp/slingshot-otp.js",
-    "./halloween-login": "./src/halloween-login/halloween-login.js"
+    "./halloween-login": "./src/halloween-login/halloween-login.js",
+    "./fun-captcha": "./src/fun-captcha/fun-captcha.js",
+    "./server": "./src/server/pow.js"
   },
   "files": [
     "dist",

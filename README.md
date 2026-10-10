@@ -10,7 +10,7 @@ Thư viện **Web Component vui vẻ** cho các thao tác thường gặp — up
 | `<vv-slingshot-otp>` — bắn từng số OTP vào ô bằng ná cao su | ✅ v0.1 |
 | `<vv-halloween-login>` — đăng nhập ngày ↔ đêm Halloween, đèn pin soi mật khẩu | ✅ v0.1 |
 | Ném đề vào máy in (`<vv-print>`) | dự kiến |
-| Captcha vui (vỏ trò chơi bọc captcha thật: Cap / ALTCHA / Turnstile) | dự kiến |
+| `<vv-fun-captcha>` — "Tôi không phải robot" + trò kéo-thả, bên trong là bằng chứng công việc kiểm tra ở máy chủ | ✅ v0.1 |
 
 **Demo trực tuyến:** https://ui-vuivui.bangluutru.workers.dev
 
@@ -21,7 +21,7 @@ npm install
 npm run dev      # trang demo: http://localhost:5180
 npm test         # test phần lõi
 npm run build    # thư viện → dist/
-npm run deploy   # build trang demo + đưa lên Cloudflare Workers (cần `wrangler login`)
+npm run deploy   # build trang demo + đưa lên Cloudflare Workers (cần `wrangler login` và secret POW_SECRET)
 ```
 
 ## Dùng trong app khác
@@ -195,6 +195,61 @@ Ban đêm, nút con mắt thành **đèn pin**: luồng sáng xoay theo con tr�
 | `vv-forgot` · `vv-signup` | `{ identifier }` · `{}` |
 
 `jsonAuthenticator(url, { identifierField = 'email', passwordField = 'password', headers, extra, credentials = 'same-origin' })`: 2xx → `{ ok, message }`; 400/401/403/422 kèm `{ ok:false }` → sai thông tin; lỗi khác → ném `AuthHttpError`.
+
+## `<vv-fun-captcha>`
+
+![Captcha vui](docs/demo-fun-captcha.jpg)
+
+Ô "Tôi là người, không phải robot" quen thuộc; bấm vào là hiện một trò kéo-thả nhỏ (cho mèo ăn cá · ném bóng vào rổ · đưa ong tới hoa). **Cùng lúc**, trình duyệt giải một đề *bằng chứng công việc* (proof-of-work) ở nền. Xong cả hai → ✓, token được đưa vào form như một ô nhập.
+
+**An ninh nằm ở máy chủ, không nằm ở trò chơi.** Trò chơi chỉ để vui — chạm nhẹ hoặc nhấn Enter là qua (cố ý, để ai cũng dùng được). Cái làm khó bot là:
+- đề do máy chủ ra, ký HMAC, có hạn dùng (mặc định 10 phút);
+- trình duyệt phải băm tới `maxnumber` lần (SHA-256) để tìm đáp án;
+- máy chủ kiểm tra chữ ký + hạn + đáp án, và **từ chối token đã dùng**.
+
+Như vậy gửi hàng loạt sẽ tốn kém; nhưng một trình duyệt tự động quyết tâm vẫn vượt qua được trong chưa tới 1 giây. Muốn mạnh hơn: tăng độ khó, giới hạn tần suất theo IP, hoặc gắn ALTCHA / Cap / Cloudflare Turnstile qua `solver`.
+
+> Giao thức `vv-pow v1` tự làm, **không** tương thích ALTCHA. Mô tả đầy đủ ở đầu `src/server/pow.js`.
+
+```html
+<form action="/binh-luan" method="post">
+  <textarea name="noi_dung" required></textarea>
+  <vv-fun-captcha name="captcha" required sound></vv-fun-captcha>
+  <button>Gửi</button>
+</form>
+<script type="module">
+  import { powSolver } from 'ui-vuivui';
+  document.querySelector('vv-fun-captcha').solver = powSolver('/api/pow/challenge');
+</script>
+```
+
+Máy chủ (Cloudflare Worker, Node 20+, Deno, Bun — chỉ dùng Web Crypto):
+
+```js
+import { createPowChallenge, verifyPow } from 'ui-vuivui/server';
+// GET /api/pow/challenge
+const ch = await createPowChallenge({ secret: env.POW_SECRET, maxnumber: 50000, ttlSeconds: 600 });
+return Response.json({ ...ch, serverTime: Date.now() });
+// Khi nhận form:
+const r = await verifyPow(form.get('captcha'), { secret: env.POW_SECRET });
+// r.ok → kiểm tra r.id CHƯA dùng (KV / DB), ghi nhớ tới r.expiresAt, rồi mới xử lý form
+```
+
+Xem `worker/index.js` cho ví dụ đầy đủ (bản demo nhớ token đã dùng trong bộ nhớ — chỉ "cố gắng hết sức"; bản thật dùng KV / Durable Object / DB).
+
+| Thuộc tính HTML | |
+|---|---|
+| `name` · `required` | tham gia form như ô nhập (ElementInternals); `required` chặn gửi khi chưa xác minh |
+| `game` | `cat` · `hoop` · `bee` · bỏ trống = ngẫu nhiên |
+| `prefetch` | giải đề ngay khi trang tải (người dùng chơi xong là xác minh luôn) |
+| `sound` · `lang` · `disabled` | như các thẻ khác |
+
+| JS | |
+|---|---|
+| `solver` | **Bắt buộc.** `({ signal, onProgress }) => Promise<{ token, expiresIn?, receivedAt? } \| string>`. Thiếu → báo lỗi, không bao giờ "đã xác minh". |
+| `value` · `verified` · `reset()` | token chỉ dùng **một lần** — gọi `reset()` sau mỗi lần gửi form |
+
+Sự kiện: `vv-verified` `{ token }` · `vv-expired` · `vv-error` `{ error }`. Hạn dùng tính theo **giờ máy chủ** (`serverTime`) nên đồng hồ máy người dùng lệch cũng không sao. `form.reset()` và khôi phục form (back/forward) đều xóa token cũ.
 
 ## Nguyên tắc chung của thư viện
 

@@ -1,10 +1,15 @@
 {
-  // ui-vuivui — trang demo tĩnh (Workers static assets). Build: npm run build:demo → demo-dist/
+  // ui-vuivui — trang demo trên Cloudflare Workers.
+  // Trang tĩnh: demo-dist/ (npm run build:demo). Chỉ /api/* chạy Worker (captcha PoW).
+  // Bí mật: wrangler secret put POW_SECRET
   "$schema": "./node_modules/wrangler/config-schema.json",
   "name": "ui-vuivui",
+  "main": "worker/index.js",
   "compatibility_date": "2026-09-20",
   "assets": {
-    "directory": "./demo-dist"
+    "directory": "./demo-dist",
+    "binding": "ASSETS",
+    "run_worker_first": ["/api/*"]
   },
   "workers_dev": true,
   "preview_urls": true

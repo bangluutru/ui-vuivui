@@ -1,0 +1,38 @@
+// Chuỗi giao diện của <vv-fun-captcha>. Ghi đè từng phần qua thuộc tính `labels`.
+
+export const LABELS = {
+  vi: {
+    main: 'Tôi là người, không phải robot',
+    idle: 'Bấm ô vuông để bắt đầu',
+    playing: 'Chơi nhanh một chút nhé',
+    checking: 'Đang kiểm tra… {p}%',
+    verified: 'Đã xác minh — bạn là người thật! 🎉',
+    expired: 'Hết hạn — bấm để xác minh lại',
+    error: 'Không xác minh được: {reason} — bấm để thử lại',
+    noSolver: 'Chưa nối với máy chủ (thiếu solver)',
+    required: 'Hãy xác minh bạn không phải robot',
+    good: 'Giỏi lắm!',
+    almost: 'Gần trúng rồi, thử lại nhé',
+    hint: 'Kéo thả — hoặc chạm nhẹ / nhấn Enter vào {item}',
+    cat: { task: 'Kéo cá cho mèo ăn', item: 'con cá', itemAria: 'Con cá — nhấn để đưa cho mèo' },
+    hoop: { task: 'Ném bóng vào rổ', item: 'quả bóng', itemAria: 'Quả bóng — nhấn để ném vào rổ' },
+    bee: { task: 'Đưa ong tới bông hoa', item: 'chú ong', itemAria: 'Chú ong — nhấn để bay tới hoa' },
+  },
+  en: {
+    main: "I'm human, not a robot",
+    idle: 'Tap the box to start',
+    playing: 'A tiny game first',
+    checking: 'Checking… {p}%',
+    verified: "Verified — you're a real human! 🎉",
+    expired: 'Expired — tap to verify again',
+    error: "Couldn't verify: {reason} — tap to retry",
+    noSolver: 'Not connected to a server (no solver set)',
+    required: "Please verify you're not a robot",
+    good: 'Nice!',
+    almost: 'So close, try again',
+    hint: 'Drag and drop — or tap / press Enter on the {item}',
+    cat: { task: 'Feed the fish to the cat', item: 'fish', itemAria: 'Fish — press to feed the cat' },
+    hoop: { task: 'Shoot the ball into the hoop', item: 'ball', itemAria: 'Ball — press to shoot' },
+    bee: { task: 'Guide the bee to the flower', item: 'bee', itemAria: 'Bee — press to fly to the flower' },
+  },
+};

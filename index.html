@@ -50,6 +50,14 @@
     .note { font-size: .82rem; color: var(--muted); }
     button.small { font: inherit; font-size: .85rem; padding: 6px 12px; border-radius: 8px; border: 1px solid var(--line); background: var(--panel); color: var(--ink); cursor: pointer; }
     .wide { max-width: 1040px; }
+    .mode { display: inline-block; padding: 3px 10px; border-radius: 999px; font-size: .8rem; font-weight: 700; }
+    .mode.real { background: #dcfce7; color: #166534; }
+    .mode.sim { background: #fef3c7; color: #92400e; }
+    .demo-form { display: grid; gap: 12px; }
+    .demo-form input[type=text] { font: inherit; font-size: 16px; padding: 9px 12px; border-radius: 10px; border: 1px solid var(--line); background: #fff; color: #1f2937; }
+    .demo-form button[type=submit] { font: inherit; font-weight: 700; padding: 10px 16px; border: 0; border-radius: 10px; background: #7c4dff; color: #fff; cursor: pointer; }
+    .result { margin: 0; font-weight: 600; min-height: 1.4em; }
+    .result.ok { color: #16a34a; } .result.bad { color: #dc2626; }
     .secret { display: inline-block; padding: 4px 12px; border-radius: 8px; background: #1f130c; color: #ffd36b; font: 700 1.3rem ui-monospace, Menlo, monospace; letter-spacing: .18em; }
   </style>
 </head>
@@ -62,6 +70,7 @@
         <a href="#upload">🏀 Ném file vào rổ</a>
         <a href="#otp">🎯 Bắn OTP bằng ná</a>
         <a href="#login">🎃 Đăng nhập Halloween</a>
+        <a href="#captcha">🤖 Captcha vui</a>
         <a href="https://github.com/bangluutru/ui-vuivui">GitHub</a>
       </nav>
     </header>
@@ -201,6 +210,56 @@ login.addEventListener('vv-login', () =&gt; location.href = '/app');
         </div>
       </div>
     </section>
+    <!-- ================= Captcha vui ================= -->
+    <section class="demo" id="captcha">
+      <h2>Captcha vui · <b>&lt;vv-fun-captcha&gt;</b></h2>
+      <p class="lead">Bấm ô vuông, chơi một trò kéo-thả nhỏ. Trong lúc đó trình duyệt giải một bài toán chống bot (bằng chứng công việc) — máy chủ mới là bên kiểm tra thật. Trò chơi chỉ để vui: chạm nhẹ hoặc nhấn Enter là qua.</p>
+      <div class="grid">
+        <div class="panel">
+          <h3>Form thử: gửi lời chào</h3>
+          <p>Chế độ máy chủ: <span class="mode" id="powMode"></span></p>
+          <form class="demo-form" id="helloForm">
+            <input type="text" name="ten" placeholder="Tên của bạn" required>
+            <vv-fun-captcha id="cap" name="captcha" required sound></vv-fun-captcha>
+            <button type="submit">Gửi lời chào</button>
+          </form>
+          <p class="result" id="capResult" aria-live="polite"></p>
+          <p><button class="small" id="replay" type="button" disabled>Gửi lại token cũ (phải bị từ chối)</button></p>
+        </div>
+        <div>
+          <div class="panel">
+            <h3>Thử nghiệm</h3>
+            <label><span>Trò chơi</span>
+              <select id="capGame"><option value="">Ngẫu nhiên</option><option value="cat">Cho mèo ăn cá</option><option value="hoop">Ném bóng vào rổ</option><option value="bee">Đưa ong tới hoa</option></select>
+            </label>
+            <label><span>Solver</span>
+              <select id="capSolver"><option value="pow">PoW (máy chủ ra đề)</option><option value="none">Không có solver</option></select>
+            </label>
+            <label><span>Ngôn ngữ</span>
+              <select id="capLang"><option value="vi">Tiếng Việt</option><option value="en">English</option></select>
+            </label>
+            <p class="note" id="capTiming"></p>
+          </div>
+          <div class="panel">
+            <h3>Sự kiện</h3>
+            <pre class="log" id="logCap"></pre>
+          </div>
+          <div class="panel">
+            <h3>Cách dùng</h3>
+<pre class="code">import { powSolver } from 'ui-vuivui';
+document.querySelector('vv-fun-captcha').solver =
+  powSolver('/api/pow/challenge');
+
+&lt;form&gt; …
+  &lt;vv-fun-captcha name="captcha" required&gt;&lt;/vv-fun-captcha&gt;
+&lt;/form&gt;
+
+// Máy chủ (Cloudflare Worker / Node):
+import { createPowChallenge, verifyPow } from 'ui-vuivui/server';</pre>
+          </div>
+        </div>
+      </div>
+    </section>
   </main>
 
   <script type="module">
@@ -208,6 +267,8 @@ login.addEventListener('vv-login', () =&gt; location.href = '/app');
     import { fakeUploader } from './demo/fake-uploader.js';
     import { fakeVerifier, randomCode } from './demo/fake-verifier.js';
     import { fakeAuthenticator, DEMO_ACCOUNT } from './demo/fake-authenticator.js';
+    import { powSolver } from './src/core/pow-solver.js';
+    import { createPowChallenge, verifyPow } from './src/server/pow.js';
 
     const $ = (id) => document.getElementById(id);
     const logger = (el) => (line) => {
@@ -280,6 +341,75 @@ login.addEventListener('vv-login', () =&gt; location.href = '/app');
     const show = (d) => JSON.stringify(d, (k, v) => (v instanceof Error ? v.message : v));
     ['vv-theme', 'vv-login', 'vv-login-failed', 'vv-error', 'vv-forgot', 'vv-signup'].forEach((t) =>
       login.addEventListener(t, (e) => wl(`${t.padEnd(15)} ${show(e.detail)}`)));
+
+    // ----- Captcha vui -----
+    // Trên máy (localhost) giả lập máy chủ ngay trong trình duyệt; trên trang thật dùng Worker Cloudflare.
+    // KHÔNG tự chuyển sang giả lập khi máy chủ thật lỗi — lỗi phải hiện ra.
+    const cap = $('cap');
+    const isLocal = ['localhost', '127.0.0.1', '[::1]'].includes(location.hostname);
+    const SIM_SECRET = 'chi-de-demo-tren-may';
+    const simUsed = new Set();
+    const server = isLocal
+      ? {
+          challenge: async () => ({ ...(await createPowChallenge({ secret: SIM_SECRET, maxnumber: 50000 })), serverTime: Date.now() }),
+          verify: async (token) => {
+            const r = await verifyPow(token, { secret: SIM_SECRET });
+            if (!r.ok) return r;
+            if (simUsed.has(r.id)) return { ok: false, reason: 'reused' };
+            simUsed.add(r.id);
+            return { ok: true };
+          },
+        }
+      : {
+          challenge: '/api/pow/challenge',
+          verify: async (token) => (await fetch('/api/pow/verify', {
+            method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ token }),
+          })).json(),
+        };
+    $('powMode').textContent = isLocal ? 'Giả lập trong trình duyệt — không an toàn' : 'Máy chủ thật (Cloudflare Worker)';
+    $('powMode').className = `mode ${isLocal ? 'sim' : 'real'}`;
+    const timedSolver = () => {
+      const inner = powSolver(server.challenge);
+      return async (ctx) => {
+        const t0 = performance.now();
+        const r = await inner(ctx);
+        $('capTiming').textContent = `Lần giải đề gần nhất: ${Math.round(performance.now() - t0)} ms (độ khó 50 000).`;
+        return r;
+      };
+    };
+    function applyCap() {
+      $('capGame').value ? cap.setAttribute('game', $('capGame').value) : cap.removeAttribute('game');
+      cap.setAttribute('lang', $('capLang').value);
+      cap.solver = $('capSolver').value === 'pow' ? timedSolver() : null;
+    }
+    ['capGame', 'capSolver', 'capLang'].forEach((id) => $(id).addEventListener('input', () => { applyCap(); cap.reset(); }));
+    applyCap();
+    const wc = logger($('logCap'));
+    cap.addEventListener('vv-verified', (e) => wc(`vv-verified token=${e.detail.token.slice(0, 24)}…`));
+    cap.addEventListener('vv-error', (e) => wc(`vv-error    ${e.detail.error.message}`));
+    cap.addEventListener('vv-expired', () => wc('vv-expired'));
+    let lastToken = null;
+    const showResult = (r) => {
+      const el = $('capResult');
+      el.className = `result ${r.ok ? 'ok' : 'bad'}`;
+      el.textContent = r.ok ? '✅ Máy chủ chấp nhận — lời chào đã được gửi!' : `❌ Máy chủ từ chối: ${r.reason}`;
+      wc(`máy chủ    ${JSON.stringify(r)}`);
+    };
+    $('helloForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const token = new FormData(e.target).get('captcha');
+      try {
+        showResult(await server.verify(token));
+      } catch (err) {
+        showResult({ ok: false, reason: err.message });
+      }
+      lastToken = token;
+      $('replay').disabled = false;
+      cap.reset(); // token chỉ dùng một lần
+    });
+    $('replay').addEventListener('click', async () => {
+      try { showResult(await server.verify(lastToken)); } catch (err) { showResult({ ok: false, reason: err.message }); }
+    });
   </script>
 </body>
 </html>

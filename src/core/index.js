@@ -7,3 +7,4 @@ export { jsonVerifier, normalizeVerdict, VerifyHttpError } from './verifier.js';
 export { angleTo, normalizeAngle, angleDiff, inBeam, beamPolygon, beamClipPath } from './beam.js';
 export { jsonAuthenticator, AuthHttpError } from './auth.js';
 export { fmt, pickLabels } from './i18n.js';
+export { solvePowChallenge, powSolver } from './pow-solver.js';

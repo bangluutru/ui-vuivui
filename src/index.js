@@ -3,3 +3,4 @@ export * from './core/index.js';
 export { VvBasketUpload } from './basket-upload/basket-upload.js';
 export { VvSlingshotOtp } from './slingshot-otp/slingshot-otp.js';
 export { VvHalloweenLogin } from './halloween-login/halloween-login.js';
+export { VvFunCaptcha } from './fun-captcha/fun-captcha.js';
