@@ -1,5 +1,7 @@
 # ui-vuivui
 
+![Demo ném file vào rổ](docs/demo-basket-upload.png)
+
 Thư viện **Web Component vui vẻ** cho các thao tác thường gặp — upload file, in, đăng nhập, nhập OTP, captcha… Mỗi thành phần làm **việc thật**, chỉ có lớp "da" là trò chơi. Dùng được ở mọi web (HTML thuần, React, Vue…), không phụ thuộc thư viện ngoài.
 
 | Thành phần | Trạng thái |
