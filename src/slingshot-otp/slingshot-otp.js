@@ -91,6 +91,7 @@ export class VvSlingshotOtp extends HTMLElement {
     this._gesture = null;
     this._message = null;
     this._boxEls = [];
+    this._epoch = 0;
     this._buildChips();
     this._wire();
   }
@@ -112,6 +113,8 @@ export class VvSlingshotOtp extends HTMLElement {
 
   /** Xóa hết, đóng màn hình thành công, cho nhập lại. */
   reset() {
+    if (this._gesture) this._cancel(this._gesture);
+    this._epoch++; // các viên đạn còn đang bay sẽ không ghi số vào ô nữa
     this._done = false;
     this._busy = false;
     this._el.done.hidden = true;
@@ -346,8 +349,10 @@ export class VvSlingshotOtp extends HTMLElement {
   // ---------- Kéo – thả ná ----------
 
   _onChipDown(e, d, chip) {
-    if (this._locked || this._gesture) return;
+    if (this._locked) return;
     if (e.pointerType === 'mouse' && e.button !== 0) return;
+    // Lần kéo trước bị kẹt (mất sự kiện nhả tay): trả số về chỗ cũ rồi nhận lần bấm mới.
+    if (this._gesture) this._cancel(this._gesture);
     e.preventDefault();
     try { chip.setPointerCapture(e.pointerId); } catch { /* sự kiện giả lập: bỏ qua */ }
 
@@ -366,12 +371,17 @@ export class VvSlingshotOtp extends HTMLElement {
 
     g.onMove = (ev) => {
       if (ev.pointerId !== g.pointerId) return;
+      // Chuột đã nhả mà không có pointerup (vd. nhả ngoài cửa sổ): hủy, không bắn.
+      if (ev.pointerType === 'mouse' && ev.buttons === 0) { this._cancel(g); return; }
       g.pos = this._toCard(ev.clientX, ev.clientY);
       if (Math.hypot(g.pos.x - g.start.x, g.pos.y - g.start.y) > TAP_MOVE) g.moved = true;
       if (g.loaded) this._updatePull(g);
     };
     g.onUp = (ev) => { if (ev.pointerId === g.pointerId) this._release(g); };
     g.onCancel = (ev) => { if (ev.pointerId === g.pointerId) this._cancel(g); };
+    // Mất "giữ con trỏ" mà chưa nhả: chờ một nhịp xem pointerup có tới không, rồi mới hủy.
+    g.onLost = () => setTimeout(() => { if (this._gesture === g) this._cancel(g); }, 0);
+    chip.addEventListener('lostpointercapture', g.onLost);
     window.addEventListener('pointermove', g.onMove);
     window.addEventListener('pointerup', g.onUp);
     window.addEventListener('pointercancel', g.onCancel);
@@ -391,6 +401,7 @@ export class VvSlingshotOtp extends HTMLElement {
 
   _endGestureListeners(g = this._gesture) {
     if (!g) return;
+    g.chip.removeEventListener('lostpointercapture', g.onLost);
     window.removeEventListener('pointermove', g.onMove);
     window.removeEventListener('pointerup', g.onUp);
     window.removeEventListener('pointercancel', g.onCancel);
@@ -421,8 +432,10 @@ export class VvSlingshotOtp extends HTMLElement {
   }
 
   _release(g) {
+    if (g.ended) return;
+    g.ended = true;
     this._endGestureListeners(g);
-    this._gesture = null;
+    if (this._gesture === g) this._gesture = null;
     this._clearAim();
     const tap = !g.moved && performance.now() - g.t0 < TAP_MS;
     const rest = this._rest();
@@ -442,8 +455,10 @@ export class VvSlingshotOtp extends HTMLElement {
   }
 
   _cancel(g) {
+    if (g.ended) return;
+    g.ended = true;
     this._endGestureListeners(g);
-    this._gesture = null;
+    if (this._gesture === g) this._gesture = null;
     this._clearAim();
     const rest = this._rest();
     this._returnToChip(g, { x: rest.x + g.pull.dx, y: rest.y + g.pull.dy });
@@ -463,6 +478,7 @@ export class VvSlingshotOtp extends HTMLElement {
   }
 
   async _physicsShot(g, start) {
+    const epoch = this._epoch;
     const boxes = this._boxRects();
     const rowY = boxes[0].cy;
     const vel = launchVelocity(g.pull, MAX_PULL, this._maxSpeed(start, rowY));
@@ -473,7 +489,7 @@ export class VvSlingshotOtp extends HTMLElement {
     try {
       if (res.hit) {
         await this._fly(g.proj, start, vel, res.t);
-        this._land(res.index, g.d, g.proj, { aimed: true });
+        this._land(res.index, g.d, g.proj, { aimed: true, epoch });
       } else {
         const pts = samplePath(start, vel, GRAVITY, { tUntil: 1.6, bounds: this._bounds() });
         await this._fly(g.proj, start, vel, Math.max(0.2, pts.length / 60), true);
@@ -520,12 +536,14 @@ export class VvSlingshotOtp extends HTMLElement {
     this._clearCode();
     this._setMessage(null);
     this._render();
+    const epoch = this._epoch;
     digits.slice(0, this._len).split('').forEach((ch, i) => {
-      setTimeout(() => this._autoShot(+ch, { target: i }), i * 90);
+      setTimeout(() => { if (epoch === this._epoch) this._autoShot(+ch, { target: i }); }, i * 90);
     });
   }
 
   async _autoShot(d, { proj, chip, target }) {
+    const epoch = this._epoch;
     let i = target ?? this._active;
     if (i < 0 || i == null) i = this._nextActive(0);
     if (i < 0) i = this._len - 1; // đầy rồi: bắn đè ô cuối
@@ -547,7 +565,7 @@ export class VvSlingshotOtp extends HTMLElement {
         easing: ease.inOutQuad,
         onUpdate: (k) => this._place(el, quadPoint(from, ctrl, to, k), k * 360, 1 - 0.12 * k),
       });
-      this._land(i, d, el, {});
+      this._land(i, d, el, { epoch });
     } finally {
       chip?.classList.remove('loaded');
       this._inFlight--;
@@ -555,8 +573,9 @@ export class VvSlingshotOtp extends HTMLElement {
     }
   }
 
-  _land(i, d, el, { aimed }) {
+  _land(i, d, el, { aimed, epoch }) {
     el.remove();
+    if (epoch !== this._epoch) return; // đã reset() trong lúc đạn bay
     this._incoming.delete(i);
     if (this._locked) return;
     this._code[i] = d;
