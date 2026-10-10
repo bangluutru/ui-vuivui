@@ -1,0 +1,7 @@
+Ghi chú mẫu để in thử
+
+- Mua sữa
+- Nộp bài tập Toán
+- Gọi điện cho bà
+
+In bằng <vv-print> của ui-vuivui 🖨️

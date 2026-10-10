@@ -11,6 +11,7 @@ export default defineConfig({
       fileName: (format) => (format === 'es' ? 'ui-vuivui.js' : 'ui-vuivui.iife.js'),
     },
     sourcemap: true,
+    copyPublicDir: false, // public/ chỉ dành cho trang demo
   },
   test: {
     environment: 'node',

@@ -58,6 +58,13 @@
     .demo-form button[type=submit] { font: inherit; font-weight: 700; padding: 10px 16px; border: 0; border-radius: 10px; background: #7c4dff; color: #fff; cursor: pointer; }
     .result { margin: 0; font-weight: 600; min-height: 1.4em; }
     .result.ok { color: #16a34a; } .result.bad { color: #dc2626; }
+    .worksheet { background: #fff; color: #111; border: 1px solid #e5e7eb; border-radius: 12px; padding: 18px 20px; margin-bottom: 16px; }
+    .worksheet h4 { margin: 0 0 4px; font-size: 1.1rem; }
+    .worksheet .who { margin: 0 0 12px; color: #555; font-size: .9rem; }
+    .worksheet ol { margin: 0; padding-left: 22px; display: grid; gap: 10px; }
+    .worksheet input { width: 70px; font: inherit; font-size: 16px; padding: 3px 6px; border: 0; border-bottom: 1.5px solid #333; background: transparent; color: #111; }
+    .inline { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+    .inline input { font: inherit; font-size: 16px; padding: 6px 10px; border-radius: 8px; border: 1px solid var(--line); background: #fff; color: #1f2937; min-width: 0; flex: 1 1 160px; }
     .secret { display: inline-block; padding: 4px 12px; border-radius: 8px; background: #1f130c; color: #ffd36b; font: 700 1.3rem ui-monospace, Menlo, monospace; letter-spacing: .18em; }
   </style>
 </head>
@@ -71,6 +78,7 @@
         <a href="#otp">🎯 Bắn OTP bằng ná</a>
         <a href="#login">🎃 Đăng nhập Halloween</a>
         <a href="#captcha">🤖 Captcha vui</a>
+        <a href="#print">🖨️ Máy in tham ăn</a>
         <a href="https://github.com/bangluutru/ui-vuivui">GitHub</a>
       </nav>
     </header>
@@ -260,6 +268,71 @@ import { createPowChallenge, verifyPow } from 'ui-vuivui/server';</pre>
         </div>
       </div>
     </section>
+    <!-- ================= Máy in tham ăn ================= -->
+    <section class="demo" id="print">
+      <h2>Máy in tham ăn · <b>&lt;vv-print&gt;</b></h2>
+      <p class="lead">Kéo tờ giấy vào miệng máy in (hoặc chạm nhẹ / bấm “In ngay”) → máy nhai rồi nhả trang ra → hộp thoại in của trình duyệt mở. Có thể thả file PDF, ảnh, ghi chú vào máy in.</p>
+      <div class="grid">
+        <div>
+          <div class="worksheet" id="phieu">
+            <h4>Phiếu bài tập — Toán lớp 3</h4>
+            <p class="who">Họ tên: <input type="text" value="" placeholder="....." style="width:160px" aria-label="Họ tên"></p>
+            <ol>
+              <li>12 + 7 = <input aria-label="Đáp án câu 1"></li>
+              <li>45 − 18 = <input aria-label="Đáp án câu 2"></li>
+              <li>6 × 8 = <input aria-label="Đáp án câu 3"></li>
+              <li>72 : 9 = <input aria-label="Đáp án câu 4"></li>
+            </ol>
+          </div>
+          <vv-print id="pr" target="#phieu" accept-files sound doc-title="Phiếu bài tập"></vv-print>
+        </div>
+        <div>
+          <div class="panel">
+            <h3>Thử nghiệm</h3>
+            <label><span>In cái gì</span>
+              <select id="prSource">
+                <option value="target">Phiếu bài tập bên trái (giữ chữ đã gõ)</option>
+                <option value="pdf">File PDF mẫu</option>
+                <option value="png">Ảnh mẫu (PNG)</option>
+                <option value="txt">Ghi chú mẫu (văn bản)</option>
+                <option value="page">Cả trang</option>
+                <option value="missing">File không tồn tại (thử lỗi)</option>
+              </select>
+            </label>
+            <label><span>Ngôn ngữ</span>
+              <select id="prLang"><option value="vi">Tiếng Việt</option><option value="en">English</option></select>
+            </label>
+            <p class="note">Trình duyệt luôn hỏi lại bằng hộp thoại in — không trang web nào được tự in im lặng. Thẻ cũng không biết bạn đã bấm In hay Hủy.</p>
+          </div>
+          <div class="panel">
+            <h3>Nâng cao: in thẳng qua chương trình trên máy</h3>
+            <p class="note">Chạy trên máy tính của bạn (macOS/Linux, cần Node):<br><code>node tools/print-agent.mjs --origin <span id="prOrigin"></span></code><br>rồi dán mã bí mật nó in ra. Chỉ in được file (PDF/ảnh/văn bản); in phiếu / cả trang vẫn dùng hộp thoại.</p>
+            <div class="inline">
+              <input id="agentToken" type="password" placeholder="Mã bí mật" autocomplete="off" aria-label="Mã bí mật của chương trình in">
+              <button class="small" id="agentOn" type="button">Dùng chương trình in</button>
+              <button class="small" id="agentOff" type="button">Dùng hộp thoại</button>
+            </div>
+            <p class="note" id="agentState">Đang dùng: hộp thoại in của trình duyệt.</p>
+          </div>
+          <div class="panel">
+            <h3>Sự kiện</h3>
+            <pre class="log" id="logPrint"></pre>
+          </div>
+          <div class="panel">
+            <h3>Cách dùng</h3>
+<pre class="code">&lt;!-- in một phần trang --&gt;
+&lt;vv-print target="#phieu" doc-title="Phiếu bài tập"&gt;&lt;/vv-print&gt;
+
+&lt;!-- in một tài liệu; cho thả file --&gt;
+&lt;vv-print src="/de/toan-3.pdf" accept-files sound&gt;&lt;/vv-print&gt;
+
+// in thẳng qua chương trình trên máy (chỉ file):
+import { agentPrintHandler } from 'ui-vuivui';
+el.printHandler = agentPrintHandler({ token: 'mã-bí-mật' });</pre>
+          </div>
+        </div>
+      </div>
+    </section>
   </main>
 
   <script type="module">
@@ -269,6 +342,7 @@ import { createPowChallenge, verifyPow } from 'ui-vuivui/server';</pre>
     import { fakeAuthenticator, DEMO_ACCOUNT } from './demo/fake-authenticator.js';
     import { powSolver } from './src/core/pow-solver.js';
     import { createPowChallenge, verifyPow } from './src/server/pow.js';
+    import { agentPrintHandler } from './src/print/agent-client.js';
 
     const $ = (id) => document.getElementById(id);
     const logger = (el) => (line) => {
@@ -407,6 +481,39 @@ import { createPowChallenge, verifyPow } from 'ui-vuivui/server';</pre>
       $('replay').disabled = false;
       cap.reset(); // token chỉ dùng một lần
     });
+    // ----- Máy in tham ăn -----
+    const pr = $('pr');
+    const SRC = { pdf: '/mau-in.pdf', png: '/mau-in.png', txt: '/mau-in.txt', missing: '/khong-co-file-nay.pdf' };
+    function applyPrint() {
+      const v = $('prSource').value;
+      pr.removeAttribute('src'); pr.removeAttribute('target');
+      if (v === 'target') pr.setAttribute('target', '#phieu');
+      else if (SRC[v]) pr.setAttribute('src', SRC[v]);
+      pr.setAttribute('lang', $('prLang').value);
+    }
+    ['prSource', 'prLang'].forEach((id) => $(id).addEventListener('input', applyPrint));
+    applyPrint();
+    $('prOrigin').textContent = location.origin;
+    $('agentOn').addEventListener('click', async () => {
+      const token = $('agentToken').value.trim();
+      if (!token) { $('agentState').textContent = 'Hãy dán mã bí mật trước.'; return; }
+      const h = agentPrintHandler({ token });
+      try {
+        if (await h.check()) {
+          pr.printHandler = h;
+          $('agentState').textContent = 'Đang dùng: chương trình in trên máy ✅ (file sẽ in thẳng, không hộp thoại).';
+        } else {
+          $('agentState').textContent = 'Chương trình in từ chối mã — kiểm tra lại.';
+        }
+      } catch {
+        $('agentState').textContent = 'Không kết nối được chương trình in (chưa chạy, sai --origin, hoặc trình duyệt chặn truy cập mạng nội bộ).';
+      }
+    });
+    $('agentOff').addEventListener('click', () => { pr.printHandler = null; $('agentState').textContent = 'Đang dùng: hộp thoại in của trình duyệt.'; });
+    const wp = logger($('logPrint'));
+    const showP = (d) => JSON.stringify(d, (k, v) => (v instanceof Error ? v.message : v));
+    ['vv-print-dialog', 'vv-print-closed', 'vv-print-sent', 'vv-print-error'].forEach((t) =>
+      pr.addEventListener(t, (e) => wp(`${t.padEnd(16)} ${showP(e.detail)}`)));
     $('replay').addEventListener('click', async () => {
       try { showResult(await server.verify(lastToken)); } catch (err) { showResult({ ok: false, reason: err.message }); }
     });

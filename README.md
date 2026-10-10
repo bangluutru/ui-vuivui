@@ -9,7 +9,7 @@ Thư viện **Web Component vui vẻ** cho các thao tác thường gặp — up
 | `<vv-basket-upload>` — ném file vào rổ để upload | ✅ v0.1 |
 | `<vv-slingshot-otp>` — bắn từng số OTP vào ô bằng ná cao su | ✅ v0.1 |
 | `<vv-halloween-login>` — đăng nhập ngày ↔ đêm Halloween, đèn pin soi mật khẩu | ✅ v0.1 |
-| Ném đề vào máy in (`<vv-print>`) | dự kiến |
+| `<vv-print>` — máy in tham ăn: kéo giấy vào miệng máy in để in | ✅ v0.1 |
 | `<vv-fun-captcha>` — "Tôi không phải robot" + trò kéo-thả, bên trong là bằng chứng công việc kiểm tra ở máy chủ | ✅ v0.1 |
 
 **Demo trực tuyến:** https://ui-vuivui.bangluutru.workers.dev
@@ -250,6 +250,54 @@ Xem `worker/index.js` cho ví dụ đầy đủ: token đã dùng được ghi v
 | `value` · `verified` · `reset()` | token chỉ dùng **một lần** — gọi `reset()` sau mỗi lần gửi form |
 
 Sự kiện: `vv-verified` `{ token }` · `vv-expired` · `vv-error` `{ error }`. Hạn dùng tính theo **giờ máy chủ** (`serverTime`) nên đồng hồ máy người dùng lệch cũng không sao. `form.reset()` và khôi phục form (back/forward) đều xóa token cũ.
+
+## `<vv-print>`
+
+![Máy in tham ăn](docs/demo-print.jpg)
+
+Kéo tờ giấy vào miệng máy in (hoặc chạm nhẹ / nhấn Enter / bấm *In ngay*) → máy in nhai giấy, rè rè, nhả trang in ra → **hộp thoại in của trình duyệt** mở. Tài liệu được chuẩn bị song song với hoạt cảnh (~1 giây).
+
+```html
+<!-- một phần trang (giữ nguyên chữ người dùng đã gõ) -->
+<vv-print target="#phieu" doc-title="Phiếu bài tập"></vv-print>
+<!-- một tài liệu, cho thả / chọn file -->
+<vv-print src="/de/toan-3.pdf" accept-files sound></vv-print>
+<!-- cả trang -->
+<vv-print></vv-print>
+```
+
+| Thuộc tính HTML | |
+|---|---|
+| `target` | CSS selector của phần cần in — in thẳng trang đang mở, ẩn mọi thứ khác bằng `@media print` |
+| `src` | đường dẫn PDF / ảnh / văn bản / trang HTML tĩnh — tải về rồi in trong iframe ẩn. Đuôi `.pdf` mà nội dung là HTML (đường dẫn sai trên web kiểu app một trang) → báo lỗi, không in |
+| `accept-files` | cho thả / chọn file **PDF, PNG, JPEG, WebP, GIF, SVG, văn bản** (nhận diện theo byte đầu; **không** nhận HTML) |
+| `doc-title` · `sound` · `lang` · `disabled` | |
+
+| Sự kiện | `detail` |
+|---|---|
+| `vv-print-dialog` | `{ source }` — hộp thoại in vừa mở |
+| `vv-print-closed` | `{ source }` — hộp thoại đã đóng (**không** biết người dùng bấm In hay Hủy) |
+| `vv-print-sent` | `{ source, result }` — đã gửi qua `printHandler` |
+| `vv-print-error` | `{ source, error }` |
+
+**An toàn:** HTML/ảnh/văn bản in trong iframe `sandbox` **không có `allow-scripts`** — file tải về không chạy được mã với quyền của trang. Văn bản được thoát ký tự; ảnh (kể cả SVG) luôn qua `<img>`.
+
+**Giới hạn của trình duyệt:** luôn có hộp thoại in (không web nào được in im lặng). In PDF từ iframe chạy tốt trên Chrome; Safari / Firefox / iPhone có thể khác — với PDF, thẻ luôn hiện thêm link *Mở trong tab mới*.
+
+### In thẳng không hộp thoại: chương trình in trên máy
+
+`tools/print-agent.mjs` (Node, macOS/Linux) nhận file từ trang web và gọi `lp`:
+
+```bash
+node tools/print-agent.mjs --origin https://ui-vuivui.bangluutru.workers.dev
+```
+
+```js
+import { agentPrintHandler } from 'ui-vuivui';
+el.printHandler = agentPrintHandler({ token: 'mã-bí-mật-nó-in-ra' });
+```
+
+Chỉ nghe ở `127.0.0.1`; mã bí mật mới mỗi lần chạy (gửi trong header); chỉ nhận từ `--origin` đã liệt kê; chỉ in **file** PDF / PNG / JPEG / GIF / văn bản (kiểm tra byte đầu, tối đa 20 MB); gọi `lp <file>` không qua shell, không nhận tuỳ chọn từ trang web. In phiếu / cả trang vẫn dùng hộp thoại (trình duyệt không tạo được PDF từ trang). Chrome có thể hỏi quyền "truy cập mạng nội bộ"; Safari có thể chặn trang https gọi `http://127.0.0.1`.
 
 ## Nguyên tắc chung của thư viện
 

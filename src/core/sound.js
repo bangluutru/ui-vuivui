@@ -107,6 +107,11 @@ const SOUNDS = {
     tone(ac, { freq: 2200, to: 1400, type: 'square', peak: 0.04, decay: 0.03 });
     noise(ac, { dur: 0.03, peak: 0.08, filter: 'highpass', freq: 3000 });
   },
+  /** rè rè — máy in chạy */
+  printer: (ac) => {
+    for (let i = 0; i < 4; i++) noise(ac, { start: i * 0.11, dur: 0.08, peak: 0.07, freq: 900, to: 1400, q: 3 });
+    tone(ac, { freq: 110, type: 'sawtooth', peak: 0.03, attack: 0.02, decay: 0.45 });
+  },
   /** bíp — lỗi / bị loại */
   buzz: (ac) => tone(ac, { freq: 180, type: 'sawtooth', peak: 0.08, decay: 0.3 }),
 };
