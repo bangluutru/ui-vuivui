@@ -45,22 +45,36 @@ export const ease = {
 
 /**
  * Chạy onUpdate(e) với e đi từ 0 → 1 trong `duration` ms.
- * Dừng sớm nếu signal bị hủy. Khi giảm chuyển động: nhảy thẳng tới cuối.
+ * Dừng sớm nếu signal bị hủy. Khi giảm chuyển động hoặc tab đang ẩn: nhảy thẳng tới cuối.
+ *
+ * Luôn xong đúng hạn: tab ẩn thì requestAnimationFrame ngừng chạy, nên có hẹn giờ
+ * dự phòng — hoạt cảnh không bao giờ được chặn việc thật (vd. upload chờ cú ném).
  */
 export function tween({ duration, easing = ease.linear, onUpdate, signal, reduced = prefersReducedMotion() }) {
   return new Promise((resolve) => {
-    if (reduced || duration <= 0 || typeof requestAnimationFrame !== 'function') {
+    const hidden = typeof document !== 'undefined' && document.hidden;
+    if (reduced || hidden || duration <= 0 || typeof requestAnimationFrame !== 'function') {
       onUpdate(1, 1);
       resolve();
       return;
     }
+    let done = false;
+    const finish = () => {
+      if (done) return;
+      done = true;
+      clearTimeout(timer);
+      if (!signal?.aborted) onUpdate(1, 1);
+      resolve();
+    };
+    const timer = setTimeout(finish, duration + 120);
     const start = performance.now();
     const frame = (now) => {
-      if (signal?.aborted) return resolve();
+      if (done) return;
+      if (signal?.aborted) return finish();
       const t = Math.min(1, (now - start) / duration);
+      if (t >= 1) return finish();
       onUpdate(easing(t), t);
-      if (t < 1) requestAnimationFrame(frame);
-      else resolve();
+      requestAnimationFrame(frame);
     };
     requestAnimationFrame(frame);
   });

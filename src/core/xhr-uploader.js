@@ -33,6 +33,10 @@ export function xhrUploader(url, opts = {}) {
   } = opts;
 
   return (file, { onProgress, signal } = {}) => new Promise((resolve, reject) => {
+    if (signal?.aborted) {
+      reject(new DOMException('Đã hủy', 'AbortError'));
+      return;
+    }
     const xhr = new XMLHttpRequest();
     xhr.open(method, typeof url === 'function' ? url(file) : url);
     xhr.withCredentials = withCredentials;
@@ -51,10 +55,7 @@ export function xhrUploader(url, opts = {}) {
     xhr.onerror = () => reject(new Error('Mất kết nối mạng'));
     xhr.onabort = () => reject(new DOMException('Đã hủy', 'AbortError'));
 
-    if (signal) {
-      if (signal.aborted) return xhr.abort();
-      signal.addEventListener('abort', () => xhr.abort(), { once: true });
-    }
+    signal?.addEventListener('abort', () => xhr.abort(), { once: true });
 
     if (bodyMode === 'raw') {
       if (file.type) xhr.setRequestHeader('Content-Type', file.type);

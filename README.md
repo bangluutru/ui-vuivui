@@ -19,6 +19,16 @@ npm test         # test phần lõi
 npm run build    # thư viện → dist/
 ```
 
+## Dùng trong app khác
+
+```bash
+npm i ../ui-vuivui                 # từ thư mục bên cạnh
+# hoặc, khi đã có repo GitHub:
+npm i github:bangluutru/ui-vuivui
+```
+
+Gói trỏ thẳng vào mã nguồn ES module (`src/index.js`), không cần build, chạy được với Vite/webpack/esbuild.
+
 ## `<vv-basket-upload>`
 
 Kéo file vào thẻ → hiện đường chấm từ con trỏ tới rổ → thả tay, file thành quả bóng bay lên vành.
@@ -38,7 +48,7 @@ Thất bại → **bật vành văng ra** ("Trượt rổ!") và có nút *Ném 
 <vv-basket-upload multiple sound accept="image/*,.pdf" max-size="10MB"></vv-basket-upload>
 ```
 
-Không dùng bundler: chép `dist/ui-vuivui.iife.js` rồi `<script src="ui-vuivui.iife.js"></script>`; các hàm nằm trong `window.UiVuiVui`.
+Không dùng bundler: chạy `npm run build`, chép `dist/ui-vuivui.iife.js` rồi `<script src="ui-vuivui.iife.js"></script>`; các hàm nằm trong `window.UiVuiVui`.
 
 ### Thuộc tính HTML
 

@@ -4,12 +4,13 @@
   "description": "Thư viện Web Component vui vẻ cho các thao tác thường gặp: upload, in, đăng nhập, OTP, captcha…",
   "type": "module",
   "license": "MIT",
-  "main": "./dist/ui-vuivui.js",
-  "module": "./dist/ui-vuivui.js",
+  "main": "./src/index.js",
+  "module": "./src/index.js",
   "exports": {
-    ".": "./dist/ui-vuivui.js",
+    ".": "./src/index.js",
     "./basket-upload": "./src/basket-upload/basket-upload.js",
-    "./core": "./src/core/index.js"
+    "./core": "./src/core/index.js",
+    "./dist/*": "./dist/*"
   },
   "files": [
     "dist",
@@ -17,7 +18,8 @@
   ],
   "sideEffects": [
     "./src/index.js",
-    "./src/basket-upload/basket-upload.js"
+    "./src/basket-upload/basket-upload.js",
+    "./dist/*.js"
   ],
   "scripts": {
     "dev": "vite --port 5180",
