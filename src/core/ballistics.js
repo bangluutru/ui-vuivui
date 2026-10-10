@@ -24,10 +24,11 @@ export function positionAt(start, vel, g, t) {
 }
 
 /**
- * Thời điểm SỚM NHẤT (t > 0) viên đạn chạm độ cao y = targetY.
+ * Thời điểm (t > 0) viên đạn chạm độ cao y = targetY: mặc định lần SỚM NHẤT;
+ * `descending: true` → lần chạm khi đang RƠI XUỐNG (ném bóng vào rổ).
  * null nếu không bao giờ tới (bắn yếu / bắn xuống).
  */
-export function timeToReachY(start, vel, g, targetY) {
+export function timeToReachY(start, vel, g, targetY, { descending = false } = {}) {
   // 0.5 g t² + vy t + (y0 - targetY) = 0
   const a = 0.5 * g;
   const b = vel.vy;
@@ -41,6 +42,10 @@ export function timeToReachY(start, vel, g, targetY) {
   if (disc < 0) return null;
   const s = Math.sqrt(disc);
   const roots = [(-b - s) / (2 * a), (-b + s) / (2 * a)].filter((t) => t > 1e-6).sort((p, q) => p - q);
+  if (descending) {
+    const down = roots.filter((t) => vel.vy + g * t > 0);
+    return down.length ? down[0] : null;
+  }
   return roots.length ? roots[0] : null;
 }
 
@@ -70,4 +75,22 @@ export function samplePath(start, vel, g, { tUntil = 1.2, step = 1 / 60, bounds 
     pts.push(p);
   }
   return pts;
+}
+
+/**
+ * Ném bóng vào rổ: bóng phải RƠI XUỐNG qua mặt vành (y = rim.y).
+ * @param {{x,y}} start  @param {{vx,vy}} vel  @param {number} g
+ * @param {{x:number, y:number, half:number}} rim  tâm vành và nửa độ rộng trong lòng vành
+ * @param {number} ballR bán kính bóng
+ * @returns {{ result: 'swish'|'rim'|'air'|'short', t: number|null, point: {x,y}|null }}
+ *   swish = lọt lưới · rim = chạm vành bật ra · air = trượt hẳn · short = không tới độ cao vành
+ */
+export function resolveHoopShot(start, vel, g, rim, ballR) {
+  const t = timeToReachY(start, vel, g, rim.y, { descending: true });
+  if (t == null) return { result: 'short', t: null, point: null };
+  const point = positionAt(start, vel, g, t);
+  const off = Math.abs(point.x - rim.x);
+  if (off <= rim.half - ballR * 0.35) return { result: 'swish', t, point };
+  if (off <= rim.half + ballR) return { result: 'rim', t, point };
+  return { result: 'air', t, point };
 }

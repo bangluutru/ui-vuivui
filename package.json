@@ -1,6 +1,6 @@
 {
   "name": "ui-vuivui",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Thư viện Web Component vui vẻ cho các thao tác thường gặp: upload, in, đăng nhập, OTP, captcha…",
   "type": "module",
   "license": "MIT",
@@ -15,7 +15,8 @@
     "./halloween-login": "./src/halloween-login/halloween-login.js",
     "./fun-captcha": "./src/fun-captcha/fun-captcha.js",
     "./server": "./src/server/pow.js",
-    "./print": "./src/print/print.js"
+    "./print": "./src/print/print.js",
+    "./basket-shot": "./src/basket-shot/basket-shot.js"
   },
   "files": [
     "dist",

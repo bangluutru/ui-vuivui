@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { clampPull, launchVelocity, timeToReachY, resolveShot, positionAt, samplePath } from '../src/core/ballistics.js';
+import { clampPull, launchVelocity, timeToReachY, resolveShot, positionAt, samplePath, resolveHoopShot } from '../src/core/ballistics.js';
 
 const G = 1000;
 const boxes = [0, 1, 2, 3, 4, 5].map((i) => ({ left: 40 + i * 50, right: 80 + i * 50 })); // ô rộng 40, cách 10
@@ -90,5 +90,28 @@ describe('samplePath', () => {
     const pts = samplePath({ x: 100, y: 100 }, { vx: 0, vy: -1000 }, G, { tUntil: 2, bounds: { left: 0, right: 200, top: 0, bottom: 400 } });
     expect(pts.length).toBeGreaterThan(1);
     expect(pts.every((p) => p.y >= 0)).toBe(true);
+  });
+});
+
+describe('resolveHoopShot', () => {
+  const rim = { x: 200, y: 100, half: 30 };
+  const start = { x: 200, y: 400 };
+  // Ném thẳng lên đủ cao rồi rơi lại đúng tâm vành
+  it('lọt lưới khi rơi xuống qua tâm vành', () => {
+    const r = resolveHoopShot(start, { vx: 0, vy: -900 }, G, rim, 14);
+    expect(r.result).toBe('swish');
+    expect(r.point.x).toBeCloseTo(200);
+    // chọn lần chạm khi đang rơi (sau đỉnh), không phải lúc bay lên
+    expect(-900 + G * r.t).toBeGreaterThan(0);
+  });
+  it('lệch vừa phải → chạm vành; lệch xa → trượt; yếu → không tới', () => {
+    expect(resolveHoopShot({ x: 228, y: 400 }, { vx: 0, vy: -900 }, G, rim, 14).result).toBe('rim');
+    expect(resolveHoopShot({ x: 300, y: 400 }, { vx: 0, vy: -900 }, G, rim, 14).result).toBe('air');
+    expect(resolveHoopShot(start, { vx: 0, vy: -500 }, G, rim, 14).result).toBe('short'); // đỉnh 125px < 300px
+  });
+  it('timeToReachY descending chọn nghiệm sau', () => {
+    const up = timeToReachY(start, { vx: 0, vy: -900 }, G, 100);
+    const down = timeToReachY(start, { vx: 0, vy: -900 }, G, 100, { descending: true });
+    expect(down).toBeGreaterThan(up);
   });
 });

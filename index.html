@@ -79,6 +79,7 @@
         <a href="#login">🎃 Đăng nhập Halloween</a>
         <a href="#captcha">🤖 Captcha vui</a>
         <a href="#print">🖨️ Máy in tham ăn</a>
+        <a href="#shot">🏀 Ném bóng xác nhận</a>
         <a href="https://github.com/bangluutru/ui-vuivui">GitHub</a>
       </nav>
     </header>
@@ -333,6 +334,27 @@ el.printHandler = agentPrintHandler({ token: 'mã-bí-mật' });</pre>
         </div>
       </div>
     </section>
+    <!-- ================= Ném bóng xác nhận ================= -->
+    <section class="demo" id="shot">
+      <h2>Ném bóng xác nhận · <b>&lt;vv-basket-shot&gt;</b></h2>
+      <p class="lead">Một cú ném để xác nhận việc gì đó (vd. trước khi in). Kéo bóng về phía rổ để ngắm, thả tay để ném — có thể trượt! Chạm nhẹ hoặc Enter là ném chuẩn.</p>
+      <div class="grid">
+        <vv-basket-shot id="shotEl" sound></vv-basket-shot>
+        <div>
+          <div class="panel">
+            <h3>Thử nghiệm</h3>
+            <label><span>Ngôn ngữ</span>
+              <select id="shotLang"><option value="vi">Tiếng Việt</option><option value="ja">日本語</option><option value="en">English</option></select>
+            </label>
+            <p><button class="small" id="shotReset" type="button">Ném lại</button></p>
+          </div>
+          <div class="panel">
+            <h3>Sự kiện</h3>
+            <pre class="log" id="logShot"></pre>
+          </div>
+        </div>
+      </div>
+    </section>
   </main>
 
   <script type="module">
@@ -514,6 +536,13 @@ el.printHandler = agentPrintHandler({ token: 'mã-bí-mật' });</pre>
     const showP = (d) => JSON.stringify(d, (k, v) => (v instanceof Error ? v.message : v));
     ['vv-print-dialog', 'vv-print-closed', 'vv-print-sent', 'vv-print-error'].forEach((t) =>
       pr.addEventListener(t, (e) => wp(`${t.padEnd(16)} ${showP(e.detail)}`)));
+    // ----- Ném bóng xác nhận -----
+    const shot = $('shotEl');
+    $('shotLang').addEventListener('input', () => shot.setAttribute('lang', $('shotLang').value));
+    $('shotReset').addEventListener('click', () => shot.reset());
+    const ws = logger($('logShot'));
+    shot.addEventListener('vv-score', (e) => ws(`vv-score ${JSON.stringify(e.detail)}`));
+    shot.addEventListener('vv-miss', (e) => ws(`vv-miss  ${JSON.stringify(e.detail)}`));
     $('replay').addEventListener('click', async () => {
       try { showResult(await server.verify(lastToken)); } catch (err) { showResult({ ok: false, reason: err.message }); }
     });

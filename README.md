@@ -10,6 +10,7 @@ Thư viện **Web Component vui vẻ** cho các thao tác thường gặp — up
 | `<vv-slingshot-otp>` — bắn từng số OTP vào ô bằng ná cao su | ✅ v0.1 |
 | `<vv-halloween-login>` — đăng nhập ngày ↔ đêm Halloween, đèn pin soi mật khẩu | ✅ v0.1 |
 | `<vv-print>` — máy in tham ăn: kéo giấy vào miệng máy in để in | ✅ v0.1 |
+| `<vv-basket-shot>` — ném một quả bóng vào rổ để xác nhận một việc (vd. trước khi in) | ✅ v0.2 |
 | `<vv-fun-captcha>` — "Tôi không phải robot" + trò kéo-thả, bên trong là bằng chứng công việc kiểm tra ở máy chủ | ✅ v0.1 |
 
 **Demo trực tuyến:** https://ui-vuivui.bangluutru.workers.dev
@@ -298,6 +299,20 @@ el.printHandler = agentPrintHandler({ token: 'mã-bí-mật-nó-in-ra' });
 ```
 
 Chỉ nghe ở `127.0.0.1`; mã bí mật mới mỗi lần chạy (gửi trong header); chỉ nhận từ `--origin` đã liệt kê; chỉ in **file** PDF / PNG / JPEG / GIF / văn bản (kiểm tra byte đầu, tối đa 20 MB); gọi `lp <file>` không qua shell, không nhận tuỳ chọn từ trang web. In phiếu / cả trang vẫn dùng hộp thoại (trình duyệt không tạo được PDF từ trang). Chrome có thể hỏi quyền "truy cập mạng nội bộ"; Safari có thể chặn trang https gọi `http://127.0.0.1`.
+
+## `<vv-basket-shot>`
+
+Ném **một** quả bóng vào rổ để xác nhận một việc — ví dụ trước khi mở hộp thoại in. Kéo bóng về phía rổ để ngắm (đường chấm **xanh** = sẽ vào), thả tay để ném; bóng phải rơi xuống qua vành mới tính — có thể **chạm vành** hoặc **trượt**. Chạm nhẹ quả bóng / nhấn Enter → ném chuẩn, luôn vào.
+
+```html
+<vv-basket-shot lang="ja" sound></vv-basket-shot>
+<script type="module">
+  import 'ui-vuivui/basket-shot';
+  document.querySelector('vv-basket-shot').addEventListener('vv-score', () => window.print());
+</script>
+```
+
+Sự kiện: `vv-score` `{ method: 'throw'|'tap'|'keyboard', shots }` · `vv-miss` `{ result: 'rim'|'air'|'short', shots }`. Phương thức `reset()`. Ngôn ngữ: `vi` · `ja` · `en`.
 
 ## Nguyên tắc chung của thư viện
 

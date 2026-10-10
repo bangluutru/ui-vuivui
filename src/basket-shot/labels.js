@@ -1,0 +1,43 @@
+// Chuỗi giao diện của <vv-basket-shot>. Ghi đè từng phần qua thuộc tính `labels`.
+
+export const LABELS = {
+  vi: {
+    title: 'Ném bóng vào rổ',
+    hint: 'Kéo bóng về phía rổ để ngắm, thả tay để ném — hoặc chạm nhẹ quả bóng',
+    aimGood: 'Ngắm chuẩn rồi, thả tay!',
+    aim: 'Đường chấm xanh là sẽ vào rổ',
+    swish: 'Vào rồi! 🎉',
+    rim: 'Chạm vành rồi, ném lại nhé',
+    miss: 'Trượt rồi, ném lại nhé',
+    short: 'Yếu quá — kéo dài thêm chút',
+    ball: 'Quả bóng — nhấn Enter để ném vào rổ',
+    soundOn: 'Bật âm thanh',
+    soundOff: 'Tắt âm thanh',
+  },
+  ja: {
+    title: 'ゴールにシュート！',
+    hint: 'ボールをゴールの方へドラッグして狙い、指を離して投げよう（タップでもOK）',
+    aimGood: 'ナイス！指を離して投げよう',
+    aim: '点線が緑ならゴール',
+    swish: 'ナイスシュート！🎉',
+    rim: 'リングに当たった！もう一回',
+    miss: '外れた！もう一回',
+    short: '届かない…もう少し長く引っぱって',
+    ball: 'ボール（Enterキーでシュート）',
+    soundOn: '音をオン',
+    soundOff: '音をオフ',
+  },
+  en: {
+    title: 'Shoot the hoop',
+    hint: 'Drag the ball toward the hoop to aim, let go to shoot — or just tap the ball',
+    aimGood: 'Perfect aim, let go!',
+    aim: 'A green dotted line means it goes in',
+    swish: 'Swish! 🎉',
+    rim: 'Off the rim — try again',
+    miss: 'Missed — try again',
+    short: 'Too short — pull a bit further',
+    ball: 'Ball — press Enter to shoot',
+    soundOn: 'Turn sound on',
+    soundOff: 'Turn sound off',
+  },
+};
